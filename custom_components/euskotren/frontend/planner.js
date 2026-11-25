@@ -39,8 +39,6 @@ const copy = {
     showFleet: "Mostrar posiciones estimadas", hideFleet: "Ocultar posiciones estimadas",
     network: "Mapa del Topo", fleetLoading: "Calculando posiciones estimadas…",
     fullscreen: "Pantalla completa", exitFullscreen: "Salir de pantalla completa",
-    terrain: "Vista 3D", exitTerrain: "Volver a 2D",
-    terrainLoading: "Cargando relieve…", terrainUnavailable: "La vista 3D no está disponible en este dispositivo o conexión.",
     fleetUnavailable: "No se pudieron actualizar las posiciones estimadas.",
     fleetEmpty: "No hay trenes en servicio según el horario disponible.",
     fleetStatus: (count, time) => `Posiciones estimadas · ${count} ${count === 1 ? "tren" : "trenes"} · ${time}`,
@@ -73,8 +71,6 @@ const copy = {
     showFleet: "Show estimated positions", hideFleet: "Hide estimated positions",
     network: "Topo network map", fleetLoading: "Calculating estimated positions…",
     fullscreen: "Full screen", exitFullscreen: "Exit full screen",
-    terrain: "3D view", exitTerrain: "Back to 2D",
-    terrainLoading: "Loading terrain…", terrainUnavailable: "The 3D view is unavailable on this device or connection.",
     fleetUnavailable: "Estimated train positions could not be refreshed.",
     fleetEmpty: "No trains are in service according to the available timetable.",
     fleetStatus: (count, time) => `Estimated positions · ${count} ${count === 1 ? "train" : "trains"} · ${time}`,
@@ -169,7 +165,6 @@ class EuskotrenPlanner extends HTMLElement {
 
   disconnectedCallback() {
     if (this.fleetEnabled) this.setFleet(false);
-    if (this.terrainRequest) this.closeTerrain();
     if (this.mapDialog?.open) {
       this.mapDialog.close();
       this.mapDialog.before(this.mapFrame);
@@ -223,12 +218,9 @@ class EuskotrenPlanner extends HTMLElement {
             <div class="connection-details" hidden></div>
             <div class="map-frame">
               <div class="map"></div>
-              <div class="terrain-map"></div>
-              <div class="map-actions">
-                <button class="terrain-toggle" type="button" aria-pressed="false" disabled></button>
-                <button class="fullscreen-toggle" type="button" aria-pressed="false" disabled></button>
-              </div>
-              <p class="terrain-status" role="status" hidden></p>
+              <button class="fullscreen-toggle" type="button" aria-pressed="false" disabled>
+                <ha-icon aria-hidden="true"></ha-icon>
+              </button>
             </div>
             <dialog class="map-dialog"></dialog>
             <h3></h3>
@@ -252,9 +244,6 @@ class EuskotrenPlanner extends HTMLElement {
     this.options = find(".options");
     this.mapFrame = find(".map-frame");
     this.mapNode = find(".map");
-    this.terrainNode = find(".terrain-map");
-    this.terrainToggle = find(".terrain-toggle");
-    this.terrainStatus = find(".terrain-status");
     this.fullscreenToggle = find(".fullscreen-toggle");
     this.mapDialog = find(".map-dialog");
     this.mapDialog.setAttribute("aria-label", this.t.network);
@@ -285,8 +274,6 @@ class EuskotrenPlanner extends HTMLElement {
     }
     this.fleetToggle.textContent = this.t.showFleet;
     this.fleetToggle.addEventListener("click", () => this.setFleet(!this.fleetEnabled));
-    this.terrainToggle.textContent = this.t.terrain;
-    this.terrainToggle.addEventListener("click", () => this.toggleTerrain());
     this.fullscreenToggle.addEventListener("click", () => this.toggleFullscreen());
     this.mapFrame.addEventListener("fullscreenchange", () => this.updateFullscreenControl());
     this.mapDialog.addEventListener("close", () => {
@@ -372,7 +359,6 @@ class EuskotrenPlanner extends HTMLElement {
     this.status.textContent = this.t.searching;
     this.selected = undefined;
     this.routeLayer?.clearLayers();
-    this.updateTerrainTracks();
     this.mapLines.replaceChildren();
     this.updateMapVisibility();
     try {
@@ -481,20 +467,20 @@ class EuskotrenPlanner extends HTMLElement {
     if (!this.mapNode.clientWidth || !this.mapNode.clientHeight) return;
     const fit = this.pendingMapFit;
     this.map.invalidateSize({ pan: !fit, debounceMoveend: true });
-    this.terrain?.map.resize();
     if (fit) {
       this.pendingMapFit = undefined;
       this.map.fitBounds(fit.bounds, { padding: [25, 25], maxZoom: fit.maxZoom, animate: false });
-      this.terrain?.fit(fit.bounds, fit.maxZoom);
       this.fullscreenToggle.disabled = false;
-      if (!this.terrainRequest) this.terrainToggle.disabled = false;
     }
   }
 
   updateFullscreenControl() {
     const expanded = this.mapFrame.matches(":fullscreen") || this.mapDialog.open;
-    this.fullscreenToggle.textContent = expanded ? this.t.exitFullscreen : this.t.fullscreen;
+    const label = expanded ? this.t.exitFullscreen : this.t.fullscreen;
+    this.fullscreenToggle.title = label;
+    this.fullscreenToggle.setAttribute("aria-label", label);
     this.fullscreenToggle.setAttribute("aria-pressed", String(expanded));
+    this.fullscreenToggle.firstElementChild.setAttribute("icon", expanded ? "mdi:fullscreen-exit" : "mdi:fullscreen");
   }
 
   async toggleFullscreen() {
@@ -521,73 +507,6 @@ class EuskotrenPlanner extends HTMLElement {
     this.fullscreenToggle.focus({ preventScroll: true });
   }
 
-  loadTerrainStyles() {
-    if (this.terrainStyles) return this.terrainStyles;
-    const stylesheet = document.createElement("link");
-    stylesheet.rel = "stylesheet";
-    stylesheet.href = plannerAsset("./maplibre/maplibre-gl.css");
-    this.terrainStyles = new Promise((resolve, reject) => {
-      stylesheet.addEventListener("load", resolve, { once: true });
-      stylesheet.addEventListener("error", () => {
-        stylesheet.remove();
-        this.terrainStyles = undefined;
-        reject(new Error("Terrain map stylesheet did not load"));
-      }, { once: true });
-      this.shadowRoot.append(stylesheet);
-    });
-    return this.terrainStyles;
-  }
-
-  showTerrainStatus(message = "") {
-    this.terrainStatus.textContent = message;
-    this.terrainStatus.hidden = !message;
-  }
-
-  async toggleTerrain() {
-    if (this.terrainRequest) {
-      const center = this.terrain.map.getCenter();
-      this.map.setView(center, this.terrain.map.getZoom() + 1, { animate: false });
-      this.closeTerrain();
-      return;
-    }
-    const request = this.terrainRequest = Symbol();
-    this.terrainToggle.disabled = true;
-    this.showTerrainStatus(this.t.terrainLoading);
-    try {
-      const [{ TerrainMap }] = await Promise.all([import(plannerAsset("./terrain-map.js")), this.loadTerrainStyles()]);
-      if (this.terrainRequest !== request) return;
-      const terrain = this.terrain = new TerrainMap(this.terrainNode, this.map, () => {
-        this.closeTerrain(this.t.terrainUnavailable);
-      });
-      await terrain.ready;
-      if (this.terrainRequest !== request) return;
-      this.updateTerrainTracks();
-      terrain.setTrains(this.fleetMarkers);
-      this.mapFrame.classList.add("terrain-active");
-      this.terrainToggle.textContent = this.t.exitTerrain;
-      this.terrainToggle.setAttribute("aria-pressed", "true");
-      this.terrainToggle.disabled = false;
-      this.showTerrainStatus();
-    } catch {
-      if (this.terrainRequest === request) this.closeTerrain(this.t.terrainUnavailable);
-    }
-  }
-
-  closeTerrain(message) {
-    this.terrainRequest = undefined;
-    this.terrain?.remove();
-    this.terrain = undefined;
-    this.mapFrame.classList.remove("terrain-active");
-    this.terrainToggle.textContent = this.t.terrain;
-    this.terrainToggle.setAttribute("aria-pressed", "false");
-    this.terrainToggle.disabled = false;
-    this.showTerrainStatus(message);
-  }
-
-  updateTerrainTracks() {
-    this.terrain?.setTracks(this.networkLayer, this.routeLayer);
-  }
-
   setFleet(enabled) {
     this.fleetEnabled = enabled;
     this.fleetCycle++;
@@ -599,7 +518,6 @@ class EuskotrenPlanner extends HTMLElement {
       clearInterval(this.fleetAnimation);
       if (!this.selected) this.pendingMapFit = undefined;
       this.networkLayer?.clearLayers();
-      this.updateTerrainTracks();
       this.clearFleet();
       return;
     }
@@ -612,7 +530,6 @@ class EuskotrenPlanner extends HTMLElement {
         color: lineInfo.get(line).stroke, weight: 10 - index * 3, opacity: 0.8,
       }).addTo(this.networkLayer);
     }
-    this.updateTerrainTracks();
     if (!this.selected) this.fitMap(this.stationBounds);
     this.fleetStatus.textContent = this.t.fleetLoading;
     this.refreshFleet(this.fleetCycle);
@@ -623,7 +540,6 @@ class EuskotrenPlanner extends HTMLElement {
     this.fleetSnapshot = undefined;
     this.fleetLayer?.clearLayers();
     this.fleetMarkers.clear();
-    this.terrain?.setTrains(this.fleetMarkers);
   }
 
   async refreshFleet(cycle) {
@@ -694,7 +610,6 @@ class EuskotrenPlanner extends HTMLElement {
     for (const train of this.fleetSnapshot.trains) {
       this.fleetMarkers.get(train.id).setLatLng(trainPosition(train, now));
     }
-    this.terrain?.setTrains(this.fleetMarkers);
   }
 
   showJourney(journey) {
@@ -747,7 +662,6 @@ class EuskotrenPlanner extends HTMLElement {
       this.stopList.append(label, list);
     }
     for (const marker of markers.values()) marker.addTo(this.routeLayer);
-    this.updateTerrainTracks();
     this.fitMap(this.routeLayer.getBounds(), 15);
   }
 }

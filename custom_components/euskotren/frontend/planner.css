@@ -129,47 +129,27 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 .map-frame {
   position: relative;
   isolation: isolate;
-  display: grid;
-  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
   height: clamp(265px, 48vh, 440px);
   border-radius: 10px;
   background: #e0ece8;
   overflow: hidden;
 }
-.map, .terrain-map {
-  grid-area: 1 / 1;
-  min-width: 0;
-  min-height: 0;
-  isolation: isolate;
-}
-.terrain-map, .terrain-active .map { visibility: hidden; }
-.terrain-active .terrain-map { visibility: visible; }
-.map-actions {
+.map { width: 100%; height: 100%; isolation: isolate; }
+.fullscreen-toggle {
   position: absolute;
+  z-index: 1;
   top: max(10px, env(safe-area-inset-top));
   right: max(10px, env(safe-area-inset-right));
-  display: flex;
-  gap: 6px;
-}
-.map-actions button {
-  min-height: 40px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
   background: var(--surface);
-  font-size: 13px;
-  font-weight: 650;
   box-shadow: 0 1px 4px #122b2633;
+  --mdc-icon-size: 22px;
 }
-.map-actions button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
-.terrain-status {
-  position: absolute;
-  top: 58px;
-  right: 10px;
-  max-width: calc(100% - 64px);
-  margin: 0;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: var(--surface);
-  font-size: 13px;
-}
+.fullscreen-toggle[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 .map-frame:fullscreen, .map-dialog .map-frame { width: 100%; height: 100%; border-radius: 0; }
 .map-dialog {
   position: fixed;
@@ -181,12 +161,6 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
   margin: 0;
   padding: 0;
   border: 0;
-}
-.terrain-train { cursor: pointer; }
-.terrain-map .maplibregl-popup-content { color: #18312d; }
-@media (max-width: 360px) {
-  .map-actions { flex-direction: column; align-items: flex-end; }
-  .terrain-status { top: 102px; }
 }
 .fleet-status { color: var(--muted); font-size: 13px; margin: 0 0 10px; }
 .estimate-marker { display: grid; place-items: center; }

@@ -24,7 +24,7 @@ Each result states whether a change is needed. For journeys with a change, it sh
 
 The map shows active trains on the railway lines when you open the planner. Use **Hide estimated positions** and **Show estimated positions** with or without a journey selected. Each marker moves between two stops using their departure and arrival times. The layer uses published timetables and applies recent Moveuskadi predictions and cancellations when available. It refreshes every 15 seconds while open. Markers show approximate positions.
 
-**Full screen** expands the map. **3D view** shows the terrain from a tilted perspective and keeps the tracks and trains visible. It requires WebGL 2 and access to Mapterhorn elevation data. Select **Back to 2D** to return to the flat map.
+The four-corner icon in the upper-right corner opens the map in full screen. Select it again or press `Esc` to exit.
 
 - The planner covers lines T0 and T1 and the section they share with E1. Platforms at the same station are grouped in the station picker.
 - The planner applies published special services and holiday exceptions. It shows the date range covered by the timetable, which can include days with no published departures. Times are shown in `Europe/Madrid`, including arrivals after midnight.
