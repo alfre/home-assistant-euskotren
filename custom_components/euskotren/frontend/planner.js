@@ -170,6 +170,7 @@ class EuskotrenPlanner extends HTMLElement {
       this.mapDialog.before(this.mapFrame);
     }
     this.mapObserver?.disconnect();
+    this.map?.off("moveend", this.positionEndpointLabels, this);
     this.map?.remove();
     this.map = undefined;
     this.pendingMapFit = undefined;
@@ -454,7 +455,7 @@ class EuskotrenPlanner extends HTMLElement {
       this.routeLayer = L.featureGroup().addTo(this.map);
       this.fleetLayer = L.layerGroup().addTo(this.map);
       this.endpointLayer = L.layerGroup().addTo(this.map);
-      this.map.on("moveend", () => this.positionEndpointLabels());
+      this.map.on("moveend", this.positionEndpointLabels, this);
       this.mapObserver = new ResizeObserver(() => this.resizeMap());
       this.mapObserver.observe(this.mapNode);
     }
