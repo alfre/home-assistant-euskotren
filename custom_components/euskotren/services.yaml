@@ -1,4 +1,5 @@
 list_stations:
+get_train_positions:
 search_journeys:
   fields:
     origin:

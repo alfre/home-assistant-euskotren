@@ -53,9 +53,14 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 .primary { min-width: 142px; border-color: transparent; background: var(--accent-solid); color: #fff; font-weight: 650; }
 .coverage, .status { color: var(--muted); font-size: 14px; }
 .coverage { margin-top: 13px; }
+.search-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; margin-top: 13px; }
+.search-footer .coverage { margin: 0; }
+.fleet-toggle { min-height: 36px; font-size: 14px; font-weight: 650; }
+.fleet-toggle[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 .status:not(:empty) { padding: 18px 4px 0; }
 .retry { margin-inline-start: 10px; }
 .results { display: grid; grid-template-columns: minmax(275px, 2fr) minmax(0, 3fr); gap: 16px; align-items: start; margin-top: 16px; }
+.results.network-only { grid-template-columns: minmax(0, 1fr); }
 .options { display: grid; gap: 8px; }
 .journey { width: 100%; display: grid; gap: 9px; text-align: start; padding: 12px; }
 .journey:hover { border-color: var(--accent); }
@@ -86,6 +91,9 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 .journey-transfer { color: var(--primary-text-color); font-weight: 700; }
 .live { color: var(--accent); font-weight: 600; }
 .map { width: 100%; height: clamp(265px, 48vh, 440px); border-radius: 10px; background: #e0ece8; overflow: hidden; }
+.fleet-status { color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+.estimate-marker { display: grid; place-items: center; }
+.estimate-marker .line-badge { border: 2px solid #fff; box-shadow: 0 1px 4px #0008; }
 .stops ol { list-style: none; margin: 0 0 0 5px; padding: 0 0 0 12px; border-inline-start: 2px solid var(--route-color); }
 .stops li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; font-size: 14px; }
 .stops li span:last-child { white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }

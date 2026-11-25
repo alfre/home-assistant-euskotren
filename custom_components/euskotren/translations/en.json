@@ -28,6 +28,10 @@
     }
   },
   "services": {
+    "get_train_positions": {
+      "name": "Estimate Topo train positions",
+      "description": "Estimate the positions of active trains along the railway using published timetables and trip predictions."
+    },
     "list_stations": {
       "name": "List Topo stations",
       "description": "Return station IDs, coordinates and the dates covered by the timetable."

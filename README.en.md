@@ -20,6 +20,8 @@ To set your usual departure station, open **Settings → Devices & services → 
 
 ## Timetables and map
 
+Select **Show estimated trains now** to see trains in service with or without a journey selected. Each marker moves along the route between two stops using their departure and arrival times. The layer uses published timetables and applies recent Moveuskadi predictions and cancellations when available. It refreshes every 15 seconds while open. Markers show approximate positions.
+
 - The planner covers lines T0 and T1 and the section they share with E1. Platforms at the same station are grouped in the station picker.
 - The planner applies published special services and holiday exceptions. It shows the date range covered by the timetable, which can include days with no published departures. Times are shown in `Europe/Madrid`, including arrivals after midnight.
 - The planner uses a recent prediction when it matches the train and service date. Where a prediction is unavailable, the planner shows the scheduled time. It omits published cancellations and marks skipped stops on the journey.
@@ -40,6 +42,8 @@ To set your usual departure station, open **Settings → Devices & services → 
 ```
 
 The response includes a `journeys` list with ISO 8601 times, duration in minutes, prediction flags, and the legs of each journey with their stops and coordinates.
+
+`euskotren.get_train_positions` returns estimated positions for trains currently in service, along with their line, destination, current or next stop, and timing source.
 
 ## Sources and license
 

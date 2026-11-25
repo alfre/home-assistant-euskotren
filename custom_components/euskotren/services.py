@@ -44,18 +44,22 @@ def _default_origin(
     return origin if isinstance(origin, str) and origin in schedule.stations else None
 
 
+async def _schedule(client: EuskotrenClient) -> Schedule:
+    try:
+        return await client.async_schedule()
+    except TimetableUnavailable as err:
+        raise HomeAssistantError(
+            translation_domain=DOMAIN, translation_key="unavailable"
+        ) from err
+
+
 @callback
 def async_setup_services(hass: HomeAssistant) -> None:
     """Expose station lookup and journey planning as response-only actions."""
 
     async def list_stations(call: ServiceCall) -> dict:
         entry = _entry(hass)
-        try:
-            schedule = await entry.runtime_data.async_schedule()
-        except TimetableUnavailable as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN, translation_key="unavailable"
-            ) from err
+        schedule = await _schedule(entry.runtime_data)
         return {
             **schedule.catalog(),
             CONF_DEFAULT_ORIGIN: _default_origin(entry, schedule),
@@ -64,12 +68,7 @@ def async_setup_services(hass: HomeAssistant) -> None:
     async def search_journeys(call: ServiceCall) -> dict:
         entry = _entry(hass)
         client = entry.runtime_data
-        try:
-            schedule = await client.async_schedule()
-        except TimetableUnavailable as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN, translation_key="unavailable"
-            ) from err
+        schedule = await _schedule(client)
         origin = call.data.get("origin") or _default_origin(entry, schedule)
         if origin is None:
             raise ServiceValidationError(
@@ -109,10 +108,25 @@ def async_setup_services(hass: HomeAssistant) -> None:
                 translation_domain=DOMAIN, translation_key=str(err)
             ) from err
 
+    async def get_train_positions(call: ServiceCall) -> dict:
+        client = _entry(hass).runtime_data
+        schedule = await _schedule(client)
+        live = await client.async_realtime()
+        return await hass.async_add_executor_job(
+            schedule.train_positions, local_now(), live
+        )
+
     hass.services.async_register(
         DOMAIN,
         "list_stations",
         list_stations,
+        schema=probatio.Schema({}),
+        supports_response=SupportsResponse.ONLY,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        "get_train_positions",
+        get_train_positions,
         schema=probatio.Schema({}),
         supports_response=SupportsResponse.ONLY,
     )

@@ -293,6 +293,69 @@ class Schedule:
             "journeys": [self._journey(legs) for legs in journeys[:limit]],
         }
 
+    def train_positions(self, now: datetime, live: Realtime | None = None) -> dict:
+        """Estimate positions for active trips at the current local time."""
+        timestamp = int(now.timestamp())
+        trains = []
+        for run in self._runs(now.astimezone(TZ).date(), live):
+            calls = [
+                (index, prediction)
+                for index, prediction in enumerate(run.times)
+                if not prediction.skipped
+            ]
+            if len(calls) < 2 or not (
+                calls[0][1].departure <= timestamp < calls[-1][1].arrival
+            ):
+                continue
+            for (start, before), (end, after) in pairwise(calls):
+                if before.departure <= timestamp < after.arrival:
+                    trains.append(self._train_in_motion(run, start, end, timestamp))
+                    break
+                if after.arrival <= timestamp < after.departure:
+                    station = self.stations[run.trip.calls[end].station]
+                    trains.append(
+                        {
+                            **_train_identity(run),
+                            "latitude": station.latitude,
+                            "longitude": station.longitude,
+                            "at_station": station.name,
+                            "realtime": after.live,
+                        }
+                    )
+                    break
+        return {
+            "calculated_at": timestamp,
+            "realtime_updated_at": _iso(live.timestamp) if live else None,
+            "trains": trains,
+        }
+
+    def _train_in_motion(self, run: Run, start: int, end: int, timestamp: int) -> dict:
+        calls = run.trip.calls[start : end + 1]
+        stations = [self.stations[call.station] for call in calls]
+        points = _route_geometry(
+            self.shapes.get(run.trip.shape, []),
+            calls,
+            [(station.latitude, station.longitude) for station in stations],
+        )
+        path = [(*points[0], 0.0)]
+        for a, b in pairwise(points):
+            distance = _meters(a, b)
+            if distance:
+                path.append((*b, path[-1][2] + distance))
+        before, after = run.times[start], run.times[end]
+        fraction = (timestamp - before.departure) / (after.arrival - before.departure)
+        latitude, longitude = _position_at_fraction(path, fraction)
+        return {
+            **_train_identity(run),
+            "latitude": latitude,
+            "longitude": longitude,
+            "next_station": stations[-1].name,
+            "departure_timestamp": before.departure,
+            "arrival_timestamp": after.arrival,
+            "path": path,
+            "realtime": before.departure_live or after.arrival_live,
+        }
+
     def _journey(self, legs: tuple[Leg, ...]) -> dict:
         first, last = legs[0], legs[-1]
         serialized = [self._leg(leg) for leg in legs]
@@ -350,6 +413,27 @@ class Schedule:
 
 
 type Coordinates = tuple[float, float]
+
+
+def _train_identity(run: Run) -> dict:
+    return {
+        "id": f"{run.trip.id}|{run.epoch}",
+        "line": run.trip.line,
+        "headsign": run.trip.headsign,
+    }
+
+
+def _position_at_fraction(
+    path: list[tuple[float, float, float]], fraction: float
+) -> Coordinates:
+    distance = path[-1][2] * fraction
+    index = bisect_left(path, distance, key=lambda point: point[2])
+    b = path[index]
+    if index == 0:
+        return b[0], b[1]
+    a = path[index - 1]
+    progress = (distance - a[2]) / (b[2] - a[2])
+    return (a[0] + (b[0] - a[0]) * progress, a[1] + (b[1] - a[1]) * progress)
 
 
 def _meters(a: Coordinates, b: Coordinates) -> float:

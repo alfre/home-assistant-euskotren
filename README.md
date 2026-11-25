@@ -20,6 +20,8 @@ Para elegir tu estación habitual, abre **Ajustes → Dispositivos y servicios �
 
 ## Horarios y mapa
 
+Pulsa **Ver trenes estimados ahora** para ver los trenes en servicio, con o sin un trayecto seleccionado. Cada marcador avanza por el trazado entre dos paradas según sus horas de salida y llegada. La capa calcula las posiciones con los horarios, aplica las previsiones y cancelaciones recientes de Moveuskadi cuando están disponibles y se actualiza cada 15 segundos mientras está abierta. Los marcadores indican posiciones aproximadas.
+
 - El buscador cubre las líneas T0 y T1 y el tramo que comparten con la E1. Los andenes de una misma estación se agrupan en el selector.
 - El calendario aplica los servicios especiales y las excepciones festivas publicados. El panel muestra el intervalo de fechas disponible, que puede incluir días sin salidas publicadas. Las horas se muestran en la zona `Europe/Madrid`, incluidas las llegadas después de medianoche.
 - Las estimaciones se aplican cuando hay una actualización reciente asociada al tren y al día de servicio. Si falta una previsión, se muestra el horario programado de ese punto. Las cancelaciones publicadas se excluyen y las paradas saltadas se indican en el recorrido.
@@ -40,6 +42,8 @@ Para elegir tu estación habitual, abre **Ajustes → Dispositivos y servicios �
 ```
 
 La respuesta contiene `journeys` con horas ISO 8601, duración en minutos, indicadores de previsión y un listado de tramos con paradas y coordenadas.
+
+`euskotren.get_train_positions` devuelve las posiciones estimadas de los trenes en servicio en ese momento, con la línea, el destino, la parada actual o siguiente y la procedencia de los tiempos.
 
 ## Fuentes y licencia
 

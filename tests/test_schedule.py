@@ -1,14 +1,17 @@
 """Regression coverage for GTFS calendar, transfers and predictions."""
 
 import unittest
-from datetime import date, time
+from datetime import date, datetime, time
 from io import BytesIO
 from zipfile import ZipFile
 
 from custom_components.euskotren.realtime import read_realtime
 from custom_components.euskotren.schedule import (
+    TZ,
     Call,
+    Realtime,
     ShapePoint,
+    TripUpdate,
     _route_geometry,
     read_schedule,
 )
@@ -149,3 +152,45 @@ class ScheduleTests(unittest.TestCase):
                 self.assertIn(tunnel, line)
                 self.assertNotIn(jump, line)
                 self.assertNotIn(former_alignment, line)
+
+    def test_train_positions_move_between_stops_and_wait_at_a_station(self):
+        at = datetime(2026, 11, 25, 10, 20, 30, tzinfo=TZ)
+        trains = self.schedule.train_positions(at)["trains"]
+        self.assertEqual(len(trains), 1)
+        self.assertEqual(trains[0]["at_station"], "B")
+        self.assertEqual(trains[0]["latitude"], 43.32)
+        moving = self.schedule.train_positions(at.replace(minute=27))["trains"][0]
+        self.assertEqual(moving["id"], trains[0]["id"])
+        self.assertEqual(moving["next_station"], "C")
+        self.assertGreater(moving["longitude"], -1.97)
+        self.assertLess(moving["longitude"], -1.93)
+        self.assertEqual(moving["path"][0], (43.32, -1.97, 0.0))
+        self.assertFalse(moving["realtime"])
+        self.assertEqual(
+            self.schedule.train_positions(at.replace(hour=9))["trains"], []
+        )
+
+    def test_train_positions_use_delays_and_exclude_cancelled_and_finished_trips(self):
+        at = datetime(2026, 11, 25, 10, 35, tzinfo=TZ)
+        self.assertEqual(self.schedule.train_positions(at)["trains"], [])
+        key = ("direct", at.date())
+        delay = Realtime(int(at.timestamp()), {key: TripUpdate(False, 300, ())})
+        moving = self.schedule.train_positions(at, delay)["trains"][0]
+        self.assertTrue(moving["realtime"])
+        self.assertEqual(moving["next_station"], "C")
+        cancellation = Realtime(int(at.timestamp()), {key: TripUpdate(True, None, ())})
+        self.assertEqual(
+            self.schedule.train_positions(at.replace(minute=27), cancellation)[
+                "trains"
+            ],
+            [],
+        )
+
+    def test_train_positions_include_an_overnight_trip_from_the_previous_service_day(
+        self,
+    ):
+        at = datetime(2026, 11, 29, 0, 25, tzinfo=TZ)
+        trains = self.schedule.train_positions(at)["trains"]
+        self.assertEqual(len(trains), 1)
+        self.assertTrue(trains[0]["id"].startswith("night|"))
+        self.assertEqual(trains[0]["next_station"], "C")

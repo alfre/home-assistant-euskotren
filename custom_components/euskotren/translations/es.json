@@ -28,6 +28,10 @@
     }
   },
   "services": {
+    "get_train_positions": {
+      "name": "Estimar posiciones de los trenes del Topo",
+      "description": "Estima dónde están los trenes en servicio a partir del trazado, los horarios y las previsiones publicadas."
+    },
     "list_stations": {
       "name": "Listar estaciones del Topo",
       "description": "Devuelve los identificadores, las coordenadas y las fechas cubiertas por el horario."
