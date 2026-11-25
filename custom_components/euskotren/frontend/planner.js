@@ -314,7 +314,7 @@ class EuskotrenPlanner extends HTMLElement {
     this.button.disabled = true;
     this.status.textContent = this.t.searching;
     this.selected = undefined;
-    this.route?.clearLayers();
+    this.routeLayer?.clearLayers();
     this.mapLines.replaceChildren();
     this.updateMapVisibility();
     if (this.fleetEnabled) this.map.invalidateSize({ pan: false });
@@ -402,7 +402,7 @@ class EuskotrenPlanner extends HTMLElement {
         maxZoom: 19, referrerPolicy: "strict-origin-when-cross-origin",
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
       }).addTo(this.map);
-      this.route = L.featureGroup().addTo(this.map);
+      this.routeLayer = L.featureGroup().addTo(this.map);
       this.fleetLayer = L.layerGroup().addTo(this.map);
     }
   }
@@ -496,7 +496,7 @@ class EuskotrenPlanner extends HTMLElement {
   showJourney(journey) {
     if (!this.isConnected) return;
     this.ensureMap();
-    this.route.clearLayers();
+    this.routeLayer.clearLayers();
     this.mapLines.replaceChildren(journeyLines(journey.legs));
     this.stopList.replaceChildren();
     if (journey.transfers) {
@@ -516,7 +516,7 @@ class EuskotrenPlanner extends HTMLElement {
     const markers = new Map();
     for (const [index, leg] of journey.legs.entries()) {
       const color = lineInfo.get(leg.line)?.stroke ?? "#087c6a";
-      L.polyline(leg.polyline, { color, weight: 5, opacity: 0.95 }).addTo(this.route);
+      L.polyline(leg.polyline, { color, weight: 5, opacity: 0.95 }).addTo(this.routeLayer);
       const label = element("h4", undefined, "leg-heading");
       label.append(lineBadge(leg.line), element("span", this.t.towards(leg.headsign || leg.destination.name)));
       const list = element("ol");
@@ -542,9 +542,9 @@ class EuskotrenPlanner extends HTMLElement {
       }
       this.stopList.append(label, list);
     }
-    for (const marker of markers.values()) marker.addTo(this.route);
+    for (const marker of markers.values()) marker.addTo(this.routeLayer);
     this.map.invalidateSize({ pan: false });
-    this.map.fitBounds(this.route.getBounds(), { padding: [25, 25], maxZoom: 15, animate: false });
+    this.map.fitBounds(this.routeLayer.getBounds(), { padding: [25, 25], maxZoom: 15, animate: false });
   }
 }
 
