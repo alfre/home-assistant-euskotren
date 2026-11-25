@@ -65,6 +65,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 .journey-top strong { font-size: 16px; }
 .journey-meta { color: var(--muted); font-size: 12px; }
 .line { border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; font-weight: 700; }
+.journey-transfer { color: var(--primary-text-color); font-weight: 700; }
 .live { color: var(--accent); font-weight: 600; }
 .map { width: 100%; height: clamp(265px, 48vh, 440px); border-radius: 10px; background: #e0ece8; overflow: hidden; }
 .stops ol { list-style: none; margin: 0 0 0 5px; padding: 0 0 0 12px; border-inline-start: 2px solid var(--route-color); }

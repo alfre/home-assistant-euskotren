@@ -6,7 +6,12 @@ from io import BytesIO
 from zipfile import ZipFile
 
 from custom_components.euskotren.realtime import read_realtime
-from custom_components.euskotren.schedule import read_schedule
+from custom_components.euskotren.schedule import (
+    Call,
+    ShapePoint,
+    _route_geometry,
+    read_schedule,
+)
 from google.transit import gtfs_realtime_pb2 as gtfs
 
 
@@ -119,3 +124,28 @@ class ScheduleTests(unittest.TestCase):
         to_b = self.schedule.search("a", "b", date(2026, 11, 25), time(9), 10, live)
         self.assertEqual(len(to_b["journeys"]), 1)
         self.assertEqual(to_b["journeys"][0]["departure"], "2026-11-25T10:00:00+01:00")
+
+    def test_map_keeps_the_continuous_alignment_in_both_directions(self):
+        pasaia = (43.3171, -1.9177)
+        galtzaraborda = (43.3124, -1.9069)
+        tunnel = (43.3149, -1.9125)
+        approach = (43.3125, -1.9080)
+        jump = (43.3205, -1.9356)
+        former_alignment = (43.3192, -1.9250)
+        published = [pasaia, tunnel, approach, jump, former_alignment, galtzaraborda]
+        for coordinates, stops in (
+            (published, [pasaia, galtzaraborda]),
+            (list(reversed(published)), [galtzaraborda, pasaia]),
+        ):
+            with self.subTest(origin=stops[0]):
+                points = [
+                    ShapePoint(i, *location) for i, location in enumerate(coordinates)
+                ]
+                first = Call("a", "a", 1, 0, 0, True, True, 0)
+                last = Call("b", "b", 2, 0, 0, True, True, len(points) - 1)
+                line = _route_geometry(points, (first, last), stops)
+                self.assertEqual(line[0], stops[0])
+                self.assertEqual(line[-1], stops[-1])
+                self.assertIn(tunnel, line)
+                self.assertNotIn(jump, line)
+                self.assertNotIn(former_alignment, line)

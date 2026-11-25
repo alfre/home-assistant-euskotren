@@ -15,7 +15,8 @@ const copy = {
     stationError: "No se pudieron cargar las estaciones.",
     searchError: "No se pudo consultar el horario.",
     sameStation: "Elige dos estaciones distintas.",
-    direct: "Directo", transfer: "1 transbordo",
+    direct: "Sin transbordo", transfer: "1 transbordo",
+    transferAt: (station) => `1 transbordo en ${station}`,
     live: "En tiempo real", scheduled: "Programado", partial: "Previsión parcial",
     planned: "Hora programada", skipped: "Sin parada",
     trainTo: (line, station) => `${line} hacia ${station}`,
@@ -32,7 +33,8 @@ const copy = {
     stationError: "The stations could not be loaded.",
     searchError: "The timetable could not be queried.",
     sameStation: "Choose two different stations.",
-    direct: "Direct", transfer: "1 change",
+    direct: "No changes", transfer: "1 change",
+    transferAt: (station) => `1 change at ${station}`,
     live: "Real time", scheduled: "Scheduled", partial: "Partial prediction",
     planned: "Scheduled time", skipped: "Does not stop",
     trainTo: (line, station) => `${line} towards ${station}`,
@@ -246,7 +248,8 @@ class EuskotrenPlanner extends HTMLElement {
     const lines = element("span", journey.legs.map((leg) => leg.line).join(" + "), "line");
     const bothLive = journey.departure_realtime && journey.arrival_realtime;
     const info = journey.realtime ? (bothLive ? this.t.live : this.t.partial) : this.t.scheduled;
-    detail.append(lines, element("span", journey.transfers ? this.t.transfer : this.t.direct),
+    const change = journey.transfers ? this.t.transferAt(journey.legs[0].destination.name) : this.t.direct;
+    detail.append(lines, element("span", change, "journey-transfer"),
       element("span", info, journey.realtime ? "live" : ""));
     button.title = `${this.t.planned} · ${this.formatTime(journey.scheduled_departure)} → ${this.formatTime(journey.scheduled_arrival)}`;
     button.append(top, detail);

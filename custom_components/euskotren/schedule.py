@@ -7,6 +7,8 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
 from io import BytesIO, TextIOWrapper
+from itertools import pairwise
+from math import cos, hypot, radians
 from typing import NamedTuple
 from zipfile import ZipFile
 from zoneinfo import ZoneInfo
@@ -25,6 +27,8 @@ WEEKDAYS = (
     "sunday",
 )
 MAX_TRANSFER = 3600
+MAX_SHAPE_GAP_METERS = 1000
+MAX_STOP_OFFSET_METERS = 250
 
 
 def _rows(
@@ -319,23 +323,11 @@ class Schedule:
             }
             for call, prediction in zip(calls, predictions, strict=True)
         ]
-        points = self.shapes.get(trip.shape, [])
-        first_distance, last_distance = calls[0].distance, calls[-1].distance
-        if first_distance is not None and last_distance is not None:
-            left = bisect_right(
-                points, first_distance, key=lambda point: point.distance
-            )
-            right = bisect_left(points, last_distance, key=lambda point: point.distance)
-            points = points[left:right]
-        else:
-            points = []
-        line = [[stop["latitude"], stop["longitude"]] for stop in stops]
-        if points:
-            line = [
-                line[0],
-                *[[point.latitude, point.longitude] for point in points],
-                line[-1],
-            ]
+        line = _route_geometry(
+            self.shapes.get(trip.shape, []),
+            calls,
+            [(stop["latitude"], stop["longitude"]) for stop in stops],
+        )
         return {
             "line": trip.line,
             "headsign": trip.headsign,
@@ -353,8 +345,73 @@ class Schedule:
             "departure_realtime": predictions[0].departure_live,
             "arrival_realtime": predictions[-1].arrival_live,
             "stops": stops,
-            "polyline": line,
+            "polyline": [list(point) for point in line],
         }
+
+
+type Coordinates = tuple[float, float]
+
+
+def _meters(a: Coordinates, b: Coordinates) -> float:
+    east = radians(b[1] - a[1]) * cos(radians((a[0] + b[0]) / 2))
+    north = radians(b[0] - a[0])
+    return 6371000 * hypot(east, north)
+
+
+def _shape_coordinates(
+    points: list[ShapePoint], start: float | None, end: float | None
+) -> list[Coordinates]:
+    if start is None or end is None:
+        return []
+    left = bisect_left(points, start, key=lambda point: point.distance)
+    right = bisect_right(points, end, key=lambda point: point.distance)
+    return [(point.latitude, point.longitude) for point in points[left:right]]
+
+
+def _continuous_parts(points: list[Coordinates]) -> list[list[Coordinates]]:
+    cuts = [
+        i
+        for i, (a, b) in enumerate(pairwise(points), 1)
+        if _meters(a, b) > MAX_SHAPE_GAP_METERS
+    ]
+    return [points[left:right] for left, right in pairwise([0, *cuts, len(points)])]
+
+
+def _route_geometry(
+    points: list[ShapePoint], calls: tuple[Call, ...], stops: list[Coordinates]
+) -> list[Coordinates]:
+    """Keep continuous track between published stops when a shape jumps between alignments."""
+    shape = _shape_coordinates(points, calls[0].distance, calls[-1].distance)
+    if not shape:
+        return stops
+    if len(_continuous_parts(shape)) == 1:
+        return [stops[0], *shape, stops[-1]]
+
+    path = [stops[0]]
+    for (start, origin), (end, destination) in pairwise(zip(calls, stops, strict=True)):
+        candidates = []
+        for part in _continuous_parts(
+            _shape_coordinates(points, start.distance, end.distance)
+        ):
+            if len(part) < 2:
+                continue
+            start_gap = _meters(origin, part[0])
+            end_gap = _meters(destination, part[-1])
+            if max(start_gap, end_gap) <= MAX_STOP_OFFSET_METERS:
+                candidates.append((start_gap + end_gap, part))
+        # A duplicated alignment often begins or ends at one of the stops.
+        # Keep a single continuous part that reaches both; otherwise join the stops.
+        segment = (
+            min(candidates, key=lambda candidate: candidate[0])[1]
+            if candidates
+            else [origin, destination]
+        )
+        for point in segment:
+            if point != path[-1]:
+                path.append(point)
+    if path[-1] != stops[-1]:
+        path.append(stops[-1])
+    return path
 
 
 def _predictions(

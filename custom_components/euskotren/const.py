@@ -2,7 +2,7 @@
 
 DOMAIN = "euskotren"
 NAME = "Euskotren Topo"
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 TIME_ZONE = "Europe/Madrid"
 FEED_BASE = "https://opendata.euskadi.eus/transport/moveuskadi/euskotren"
 SCHEDULE_URL = f"{FEED_BASE}/gtfs_euskotren.zip"
