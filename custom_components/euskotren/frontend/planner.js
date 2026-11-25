@@ -156,8 +156,10 @@ class EuskotrenPlanner extends HTMLElement {
 
   disconnectedCallback() {
     if (this.fleetEnabled) this.setFleet(false);
+    this.mapObserver?.disconnect();
     this.map?.remove();
     this.map = undefined;
+    this.pendingMapFit = undefined;
   }
 
   render() {
@@ -322,7 +324,6 @@ class EuskotrenPlanner extends HTMLElement {
     this.routeLayer?.clearLayers();
     this.mapLines.replaceChildren();
     this.updateMapVisibility();
-    if (this.fleetEnabled) this.map.invalidateSize({ pan: false });
     try {
       const result = await this.action("search_journeys", data);
       this.resultDate = result.date;
@@ -401,7 +402,9 @@ class EuskotrenPlanner extends HTMLElement {
 
   ensureMap() {
     if (!this.map) {
-      this.map = L.map(this.mapNode, { scrollWheelZoom: false, attributionControl: false });
+      this.map = L.map(this.mapNode, {
+        scrollWheelZoom: false, attributionControl: false, trackResize: false,
+      });
       const attribution = L.control.attribution({ prefix: false }).addTo(this.map);
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19, referrerPolicy: "strict-origin-when-cross-origin",
@@ -411,6 +414,24 @@ class EuskotrenPlanner extends HTMLElement {
       this.networkLayer = L.layerGroup().addTo(this.map);
       this.routeLayer = L.featureGroup().addTo(this.map);
       this.fleetLayer = L.layerGroup().addTo(this.map);
+      this.mapObserver = new ResizeObserver(() => this.resizeMap());
+      this.mapObserver.observe(this.mapNode);
+    }
+  }
+
+  fitMap(bounds, maxZoom) {
+    this.pendingMapFit = { bounds, maxZoom };
+    this.resizeMap();
+  }
+
+  resizeMap() {
+    // The map can have no height until the planner stylesheet has loaded.
+    if (!this.map || !this.mapNode.clientWidth || !this.mapNode.clientHeight) return;
+    const fit = this.pendingMapFit;
+    this.map.invalidateSize({ pan: !fit, debounceMoveend: true });
+    if (fit) {
+      this.pendingMapFit = undefined;
+      this.map.fitBounds(fit.bounds, { padding: [25, 25], maxZoom: fit.maxZoom, animate: false });
     }
   }
 
@@ -423,6 +444,7 @@ class EuskotrenPlanner extends HTMLElement {
     if (!enabled) {
       clearTimeout(this.fleetTimer);
       clearInterval(this.fleetAnimation);
+      if (!this.selected) this.pendingMapFit = undefined;
       this.networkLayer?.clearLayers();
       this.clearFleet();
       return;
@@ -436,10 +458,7 @@ class EuskotrenPlanner extends HTMLElement {
         color: lineInfo.get(line).stroke, weight: 10 - index * 3, opacity: 0.8,
       }).addTo(this.networkLayer);
     }
-    this.map.invalidateSize({ pan: false });
-    if (!this.selected) {
-      this.map.fitBounds(this.stationBounds, { padding: [25, 25], animate: false });
-    }
+    if (!this.selected) this.fitMap(this.stationBounds);
     this.fleetStatus.textContent = this.t.fleetLoading;
     this.refreshFleet(this.fleetCycle);
     this.fleetAnimation = setInterval(() => this.moveTrains(), 1000);
@@ -571,8 +590,7 @@ class EuskotrenPlanner extends HTMLElement {
       this.stopList.append(label, list);
     }
     for (const marker of markers.values()) marker.addTo(this.routeLayer);
-    this.map.invalidateSize({ pan: false });
-    this.map.fitBounds(this.routeLayer.getBounds(), { padding: [25, 25], maxZoom: 15, animate: false });
+    this.fitMap(this.routeLayer.getBounds(), 15);
   }
 }
 
