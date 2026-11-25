@@ -87,6 +87,21 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 }
 .map-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; justify-content: space-between; margin-bottom: 14px; }
 .map-heading h2 { margin: 0; }
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  padding: 7px 9px;
+  margin: 0 0 10px;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.map-legend li { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; }
+.map-legend .line-badge { flex: none; min-width: 25px; min-height: 19px; padding: 1px 4px; font-size: 12px; }
 .leg-heading { display: flex; align-items: center; gap: 8px; }
 .journey-transfer { color: var(--primary-text-color); font-weight: 700; }
 .live { color: var(--accent); font-weight: 600; }

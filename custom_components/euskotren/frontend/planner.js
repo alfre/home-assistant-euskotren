@@ -2,10 +2,10 @@ import * as L from "./leaflet/leaflet-src.esm.js";
 
 const zone = "Europe/Madrid";
 const fleetRefresh = 15000;
-const lineColors = new Map([
-  ["T0", { background: "#B77FA0", text: "#21111C", stroke: "#884768" }],
-  ["T1", { background: "#B0BC22", text: "#202600", stroke: "#5C6900" }],
-  ["E1", { background: "#005A8B", text: "#FFFFFF", stroke: "#005A8B" }],
+const lineInfo = new Map([
+  ["T0", { background: "#B77FA0", text: "#21111C", stroke: "#884768", route: "Añorga ↔ Pasaia" }],
+  ["T1", { background: "#B0BC22", text: "#202600", stroke: "#5C6900", route: "Lasarte-Oria ↔ Irun / Hendaia" }],
+  ["E1", { background: "#005A8B", text: "#FFFFFF", stroke: "#005A8B", route: "Matiko (Bilbao) / Zumaia ↔ Pasaia" }],
 ]);
 const copy = {
   es: {
@@ -15,7 +15,7 @@ const copy = {
     swap: "Intercambiar origen y destino", search: "Buscar trenes",
     loading: "Cargando estaciones…", searching: "Buscando trenes…", retry: "Reintentar",
     coverage: (first, last) => `Horarios disponibles del ${first} al ${last} · hora local`,
-    results: "Trayectos", route: "Mapa del trayecto", stops: "Paradas",
+    results: "Trayectos", route: "Mapa del trayecto", stops: "Paradas", lineLegend: "Líneas y recorridos",
     empty: "El horario publicado no muestra salidas para este trayecto a partir de la hora elegida.",
     stationError: "No se pudieron cargar las estaciones.",
     searchError: "No se pudo consultar el horario.",
@@ -41,7 +41,7 @@ const copy = {
     swap: "Swap origin and destination", search: "Find trains",
     loading: "Loading stations…", searching: "Finding trains…", retry: "Retry",
     coverage: (first, last) => `Timetable available from ${first} to ${last} · local time`,
-    results: "Journeys", route: "Journey map", stops: "Stops",
+    results: "Journeys", route: "Journey map", stops: "Stops", lineLegend: "Lines and routes",
     empty: "The published timetable has no departures for this journey from the selected time.",
     stationError: "The stations could not be loaded.",
     searchError: "The timetable could not be queried.",
@@ -71,7 +71,7 @@ function element(tag, text, className) {
 
 function lineBadge(line) {
   const badge = element("span", line, "line-badge");
-  const color = lineColors.get(line);
+  const color = lineInfo.get(line);
   if (color) {
     badge.style.setProperty("--line-background", color.background);
     badge.style.setProperty("--line-text", color.text);
@@ -187,6 +187,7 @@ class EuskotrenPlanner extends HTMLElement {
           <section class="journeys"><h2></h2><div class="options"></div></section>
           <section class="detail">
             <div class="map-heading"><h2></h2><div class="map-lines"></div></div>
+            <ul class="map-legend" role="list"></ul>
             <p class="fleet-status" hidden></p>
             <div class="map"></div>
             <h3></h3>
@@ -222,6 +223,13 @@ class EuskotrenPlanner extends HTMLElement {
     find(".journeys h2").textContent = this.t.results;
     this.mapTitle.textContent = this.t.route;
     this.stopsTitle.textContent = this.t.stops;
+    const legend = find(".map-legend");
+    legend.setAttribute("aria-label", this.t.lineLegend);
+    for (const [line, { route }] of lineInfo) {
+      const entry = element("li");
+      entry.append(lineBadge(line), element("span", route));
+      legend.append(entry);
+    }
     this.fleetToggle.textContent = this.t.showFleet;
     this.fleetToggle.addEventListener("click", () => this.setFleet(!this.fleetEnabled));
     this.button.textContent = this.t.search;
@@ -466,7 +474,7 @@ class EuskotrenPlanner extends HTMLElement {
     this.stopList.replaceChildren();
     const markers = new Map();
     for (const [index, leg] of journey.legs.entries()) {
-      const color = lineColors.get(leg.line)?.stroke ?? "#087c6a";
+      const color = lineInfo.get(leg.line)?.stroke ?? "#087c6a";
       L.polyline(leg.polyline, { color, weight: 5, opacity: 0.95 }).addTo(this.route);
       const label = element("h4", undefined, "leg-heading");
       label.append(lineBadge(leg.line), element("span", this.t.towards(leg.headsign || leg.destination.name)));
