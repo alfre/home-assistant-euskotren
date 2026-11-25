@@ -22,7 +22,7 @@ Para elegir tu estación habitual, abre **Ajustes → Dispositivos y servicios �
 
 Cada resultado indica si hay transbordo. Cuando lo hay, muestra la estación, la hora de llegada, la hora de salida del siguiente tren y la espera. Al seleccionar el trayecto, encima del mapa verás de qué línea bajar y en cuál continuar.
 
-Pulsa **Mostrar posiciones estimadas** para ver los trenes en servicio sobre el trazado de las líneas, con o sin un trayecto seleccionado. Cada marcador avanza entre dos paradas según sus horas de salida y llegada. La capa calcula las posiciones con los horarios, aplica las previsiones y cancelaciones recientes de Moveuskadi cuando están disponibles y se actualiza cada 15 segundos mientras está abierta. Los marcadores indican posiciones aproximadas.
+Al abrir el planificador, el mapa muestra los trenes en servicio sobre el trazado de las líneas. Puedes usar **Ocultar posiciones estimadas** y **Mostrar posiciones estimadas** con o sin un trayecto seleccionado. Cada marcador avanza entre dos paradas según sus horas de salida y llegada. La capa calcula las posiciones con los horarios, aplica las previsiones y cancelaciones recientes de Moveuskadi cuando están disponibles y se actualiza cada 15 segundos mientras está abierta. Los marcadores indican posiciones aproximadas.
 
 - El buscador cubre las líneas T0 y T1 y el tramo que comparten con la E1. Los andenes de una misma estación se agrupan en el selector.
 - El calendario aplica los servicios especiales y las excepciones festivas publicados. El panel muestra el intervalo de fechas disponible, que puede incluir días sin salidas publicadas. Las horas se muestran en la zona `Europe/Madrid`, incluidas las llegadas después de medianoche.

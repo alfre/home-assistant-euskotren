@@ -2,7 +2,7 @@
 
 DOMAIN = "euskotren"
 NAME = "Euskotren Topo"
-VERSION = "0.2.4"
+VERSION = "0.2.5"
 CONF_DEFAULT_ORIGIN = "default_origin"
 TIME_ZONE = "Europe/Madrid"
 FEED_BASE = "https://opendata.euskadi.eus/transport/moveuskadi/euskotren"

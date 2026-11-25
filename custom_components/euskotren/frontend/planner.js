@@ -151,6 +151,7 @@ class EuskotrenPlanner extends HTMLElement {
   connectedCallback() {
     if (this._hass && !this.form) this.render();
     if (this.selected) this.showJourney(this.selected);
+    if (this.stationBounds?.isValid()) this.setFleet(true);
   }
 
   disconnectedCallback() {
@@ -300,6 +301,7 @@ class EuskotrenPlanner extends HTMLElement {
       this.button.disabled = false;
       this.fleetToggle.disabled = !this.stationBounds.isValid();
       this.status.textContent = "";
+      if (this.isConnected && !this.fleetToggle.disabled) this.setFleet(true);
     } catch {
       const retry = element("button", this.t.retry, "retry");
       retry.addEventListener("click", () => this.loadStations());
