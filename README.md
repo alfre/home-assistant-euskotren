@@ -24,6 +24,8 @@ Cada resultado indica si hay transbordo. Cuando lo hay, muestra la estación, la
 
 Al abrir el planificador, el mapa muestra los trenes en servicio sobre el trazado de las líneas. Puedes usar **Ocultar posiciones estimadas** y **Mostrar posiciones estimadas** con o sin un trayecto seleccionado. Cada marcador avanza entre dos paradas según sus horas de salida y llegada. La capa calcula las posiciones con los horarios, aplica las previsiones y cancelaciones recientes de Moveuskadi cuando están disponibles y se actualiza cada 15 segundos mientras está abierta. Los marcadores indican posiciones aproximadas.
 
+**Pantalla completa** amplía el mapa. **Vista 3D** muestra el relieve con una perspectiva inclinada y conserva el trazado y los trenes. Requiere WebGL 2 y acceso a los datos de elevación de Mapterhorn. Puedes volver al mapa plano con **Volver a 2D**.
+
 - El buscador cubre las líneas T0 y T1 y el tramo que comparten con la E1. Los andenes de una misma estación se agrupan en el selector.
 - El calendario aplica los servicios especiales y las excepciones festivas publicados. El panel muestra el intervalo de fechas disponible, que puede incluir días sin salidas publicadas. Las horas se muestran en la zona `Europe/Madrid`, incluidas las llegadas después de medianoche.
 - Las estimaciones se aplican cuando hay una actualización reciente asociada al tren y al día de servicio. Si falta una previsión, se muestra el horario programado de ese punto. Las cancelaciones publicadas se excluyen y las paradas saltadas se indican en el recorrido.
