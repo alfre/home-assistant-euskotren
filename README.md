@@ -1,5 +1,7 @@
 # Euskotren Topo para Home Assistant
 
+[English version](README.en.md)
+
 Consulta las salidas del Topo desde la barra lateral de Home Assistant. Elige el origen, el destino, la fecha y la hora a partir de la que quieres salir. Cada resultado muestra la salida, la llegada, la duración, las líneas, las paradas y un mapa interactivo. Si el viaje requiere un transbordo en una misma estación, el buscador combina hasta dos trenes.
 
 ## Instalación
