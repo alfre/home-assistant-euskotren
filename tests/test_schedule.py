@@ -87,6 +87,19 @@ class ScheduleTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "date_out_of_range"):
             self.journeys(date(2026, 12, 1))
 
+    def test_earlier_boarding_can_connect_to_the_later_direct_train(self):
+        self.schedule.trips = tuple(
+            trip for trip in self.schedule.trips if trip.id != "second"
+        )
+        connection, direct = self.journeys()
+        self.assertEqual(connection["transfers"], 1)
+        self.assertEqual(connection["legs"][0]["destination"]["name"], "B")
+        self.assertEqual(
+            connection["legs"][1]["departure"], "2026-11-25T10:21:00+01:00"
+        )
+        self.assertEqual(connection["arrival"], direct["arrival"])
+        self.assertEqual(direct["transfers"], 0)
+
     def test_delays_invalidate_a_transfer_and_cancellations_are_date_specific(self):
         feed = gtfs.FeedMessage()
         feed.header.gtfs_realtime_version = "2.0"
@@ -100,9 +113,11 @@ class ScheduleTests(unittest.TestCase):
         cancelled.trip.start_date = "20261124"
         cancelled.trip.schedule_relationship = gtfs.TripDescriptor.CANCELED
         live = read_realtime(feed.SerializeToString())
+        connection, direct = self.journeys(live=live)
         self.assertEqual(
-            [journey["transfers"] for journey in self.journeys(live=live)], [0]
+            connection["legs"][1]["departure"], "2026-11-25T10:21:00+01:00"
         )
+        self.assertEqual(connection["arrival"], direct["arrival"])
         self.assertEqual(
             [
                 journey["transfers"]

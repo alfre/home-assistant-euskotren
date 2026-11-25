@@ -250,8 +250,12 @@ class Schedule:
             station: [leg.departure for leg in legs]
             for station, legs in connections.items()
         }
+        direct_boardings = {_boarding_key(legs[0]) for legs in direct}
         best_connection: dict[tuple[str, int, int], tuple[Leg, Leg]] = {}
         for first in first_legs:
+            key = _boarding_key(first)
+            if key in direct_boardings:
+                continue
             station = first.run.trip.calls[first.end].station
             transfer = self.transfers.get(station, 120)
             if station not in connections or transfer is None:
@@ -259,18 +263,24 @@ class Schedule:
             departures = departure_index[station]
             left = bisect_left(departures, first.arrival + transfer)
             right = bisect_right(departures, first.arrival + MAX_TRANSFER)
+            visited = {
+                call.station for call in first.run.trip.calls[first.start : first.end]
+            }
             for second in connections[station][left:right]:
                 if first.run is second.run or second.arrival < second.departure:
                     continue
-                key = (first.run.trip.id, first.run.epoch, first.start)
-                current = best_connection.get(key)
-                if current is None or (second.arrival, second.departure) < (
-                    current[1].arrival,
-                    current[1].departure,
+                if any(
+                    call.station in visited
+                    for call in second.run.trip.calls[second.start + 1 : second.end + 1]
                 ):
+                    continue
+                current = best_connection.get(key)
+                if current is None or _connection_rank(
+                    first, second
+                ) < _connection_rank(*current):
                     best_connection[key] = (first, second)
 
-        # Connections are useful only if they beat every direct train leaving as late or later.
+        # Keep an earlier boarding that catches a later direct train at a shared stop.
         options = sorted(
             [*direct, *best_connection.values()],
             key=lambda legs: (-legs[0].departure, legs[-1].arrival, len(legs)),
@@ -282,7 +292,7 @@ class Schedule:
                 continue
             if len(legs) == 1:
                 best_direct_arrival = min(best_direct_arrival, legs[-1].arrival)
-            elif legs[-1].arrival >= best_direct_arrival:
+            elif legs[-1].arrival > best_direct_arrival:
                 continue
             journeys.append(legs)
         journeys.sort(key=lambda legs: (legs[0].departure, legs[-1].arrival, len(legs)))
@@ -413,6 +423,14 @@ class Schedule:
 
 
 type Coordinates = tuple[float, float]
+
+
+def _boarding_key(leg: Leg) -> tuple[str, int, int]:
+    return leg.run.trip.id, leg.run.epoch, leg.start
+
+
+def _connection_rank(first: Leg, second: Leg) -> tuple[int, int, int]:
+    return second.arrival, -first.end, second.departure
 
 
 def _train_identity(run: Run) -> dict:

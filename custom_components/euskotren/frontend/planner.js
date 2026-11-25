@@ -22,6 +22,10 @@ const copy = {
     sameStation: "Elige dos estaciones distintas.",
     direct: "Sin transbordo", transfer: "1 transbordo",
     transferAt: (station) => `1 transbordo en ${station}`,
+    transferTimes: (arrival, departure) => `Llegada ${arrival} · Salida ${departure}`,
+    transferWait: (minutes) => `${minutes} min de espera`,
+    getOff: (time) => `Baja a las ${time}`,
+    getOn: (time) => `Sube a las ${time}`,
     live: "En tiempo real", scheduled: "Programado", partial: "Previsión parcial",
     planned: "Hora programada", skipped: "Sin parada",
     towards: (station) => `hacia ${station}`,
@@ -48,6 +52,10 @@ const copy = {
     sameStation: "Choose two different stations.",
     direct: "No changes", transfer: "1 change",
     transferAt: (station) => `1 change at ${station}`,
+    transferTimes: (arrival, departure) => `Arrive ${arrival} · Depart ${departure}`,
+    transferWait: (minutes) => `${minutes} min wait`,
+    getOff: (time) => `Get off at ${time}`,
+    getOn: (time) => `Board at ${time}`,
     live: "Real time", scheduled: "Scheduled", partial: "Partial prediction",
     planned: "Scheduled time", skipped: "Does not stop",
     towards: (station) => `towards ${station}`,
@@ -189,6 +197,7 @@ class EuskotrenPlanner extends HTMLElement {
             <div class="map-heading"><h2></h2><div class="map-lines"></div></div>
             <ul class="map-legend" role="list"></ul>
             <p class="fleet-status" hidden></p>
+            <div class="connection-details" hidden></div>
             <div class="map"></div>
             <h3></h3>
             <div class="stops"></div>
@@ -212,6 +221,7 @@ class EuskotrenPlanner extends HTMLElement {
     this.stopList = find(".stops");
     this.fleetToggle = find(".fleet-toggle");
     this.fleetStatus = find(".fleet-status");
+    this.connectionDetails = find(".connection-details");
     this.button = find(".primary");
     this.fields = Object.fromEntries(
       ["origin", "destination", "date", "time"].map((name) => [name, this.form.elements.namedItem(name)]),
@@ -327,6 +337,15 @@ class EuskotrenPlanner extends HTMLElement {
     return nextDay ? `${formatted} · ${this.dateFormat.format(new Date(value))}` : formatted;
   }
 
+  transferTiming(journey) {
+    const [first, next] = journey.legs;
+    return {
+      arrival: this.formatTime(first.arrival),
+      departure: this.formatTime(next.departure),
+      wait: this.t.transferWait(Math.ceil((Date.parse(next.departure) - Date.parse(first.arrival)) / 60000)),
+    };
+  }
+
   journeyButton(journey) {
     const button = element("button", undefined, "journey");
     button.type = "button";
@@ -344,6 +363,13 @@ class EuskotrenPlanner extends HTMLElement {
       element("span", info, journey.realtime ? "live" : ""));
     button.title = `${this.t.planned} · ${this.formatTime(journey.scheduled_departure)} → ${this.formatTime(journey.scheduled_arrival)}`;
     button.append(top, detail);
+    if (journey.transfers) {
+      const timing = this.transferTiming(journey);
+      const connection = element("span", undefined, "journey-connection");
+      connection.append(element("span", this.t.transferTimes(timing.arrival, timing.departure)),
+        element("strong", timing.wait));
+      button.append(connection);
+    }
     button.addEventListener("click", () => this.selectJourney(journey, button));
     return button;
   }
@@ -365,6 +391,7 @@ class EuskotrenPlanner extends HTMLElement {
     this.stopList.hidden = !hasJourney;
     this.mapTitle.textContent = hasJourney ? this.t.route : this.t.network;
     this.fleetStatus.hidden = !this.fleetEnabled;
+    this.connectionDetails.hidden = !this.selected?.transfers;
   }
 
   ensureMap() {
@@ -472,6 +499,20 @@ class EuskotrenPlanner extends HTMLElement {
     this.route.clearLayers();
     this.mapLines.replaceChildren(journeyLines(journey.legs));
     this.stopList.replaceChildren();
+    if (journey.transfers) {
+      const [first, next] = journey.legs;
+      const timing = this.transferTiming(journey);
+      const header = element("div", undefined, "connection-title");
+      header.append(element("strong", this.t.transferAt(first.destination.name)),
+        element("span", timing.wait));
+      const steps = element("div", undefined, "connection-steps");
+      const getOff = element("span");
+      getOff.append(lineBadge(first.line), element("span", this.t.getOff(timing.arrival)));
+      const getOn = element("span");
+      getOn.append(lineBadge(next.line), element("span", this.t.getOn(timing.departure)));
+      steps.append(getOff, getOn);
+      this.connectionDetails.replaceChildren(header, steps);
+    }
     const markers = new Map();
     for (const [index, leg] of journey.legs.entries()) {
       const color = lineInfo.get(leg.line)?.stroke ?? "#087c6a";

@@ -20,6 +20,8 @@ To set your usual departure station, open **Settings → Devices & services → 
 
 ## Timetables and map
 
+Each result states whether a change is needed. For journeys with a change, it shows the station, arrival time, the next train's departure time, and the wait. Selecting a journey shows the two lines and when to get off and board above the map.
+
 Select **Show estimated trains now** to see trains in service with or without a journey selected. Each marker moves along the route between two stops using their departure and arrival times. The layer uses published timetables and applies recent Moveuskadi predictions and cancellations when available. It refreshes every 15 seconds while open. Markers show approximate positions.
 
 - The planner covers lines T0 and T1 and the section they share with E1. Platforms at the same station are grouped in the station picker.

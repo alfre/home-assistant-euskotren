@@ -20,6 +20,8 @@ Para elegir tu estación habitual, abre **Ajustes → Dispositivos y servicios �
 
 ## Horarios y mapa
 
+Cada resultado indica si hay transbordo. Cuando lo hay, muestra la estación, la hora de llegada, la hora de salida del siguiente tren y la espera. Al seleccionar el trayecto, encima del mapa verás de qué línea bajar y en cuál continuar.
+
 Pulsa **Ver trenes estimados ahora** para ver los trenes en servicio, con o sin un trayecto seleccionado. Cada marcador avanza por el trazado entre dos paradas según sus horas de salida y llegada. La capa calcula las posiciones con los horarios, aplica las previsiones y cancelaciones recientes de Moveuskadi cuando están disponibles y se actualiza cada 15 segundos mientras está abierta. Los marcadores indican posiciones aproximadas.
 
 - El buscador cubre las líneas T0 y T1 y el tramo que comparten con la E1. Los andenes de una misma estación se agrupan en el selector.
