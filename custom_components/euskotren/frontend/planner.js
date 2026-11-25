@@ -359,6 +359,7 @@ class EuskotrenPlanner extends HTMLElement {
     this.status.textContent = this.t.searching;
     this.selected = undefined;
     this.routeLayer?.clearLayers();
+    this.endpointLayer?.clearLayers();
     this.mapLines.replaceChildren();
     this.updateMapVisibility();
     try {
@@ -448,9 +449,12 @@ class EuskotrenPlanner extends HTMLElement {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
       }).addTo(this.map);
       this.map.createPane("networkTrack").style.zIndex = "390";
+      this.map.createPane("routeEndpoints").style.zIndex = "640";
       this.networkLayer = L.layerGroup().addTo(this.map);
       this.routeLayer = L.featureGroup().addTo(this.map);
       this.fleetLayer = L.layerGroup().addTo(this.map);
+      this.endpointLayer = L.layerGroup().addTo(this.map);
+      this.map.on("moveend", () => this.positionEndpointLabels());
       this.mapObserver = new ResizeObserver(() => this.resizeMap());
       this.mapObserver.observe(this.mapNode);
     }
@@ -469,8 +473,42 @@ class EuskotrenPlanner extends HTMLElement {
     this.map.invalidateSize({ pan: !fit, debounceMoveend: true });
     if (fit) {
       this.pendingMapFit = undefined;
-      this.map.fitBounds(fit.bounds, { padding: [25, 25], maxZoom: fit.maxZoom, animate: false });
+      this.map.fitBounds(fit.bounds, {
+        padding: [25, this.selected ? 70 : 25], maxZoom: fit.maxZoom, animate: false,
+      });
+      this.positionEndpointLabels();
       this.fullscreenToggle.disabled = false;
+    }
+  }
+
+  addJourneyEndpoint(stop, role, above) {
+    const content = element("div", undefined, `endpoint-content endpoint-${role}`);
+    const pin = element("span", undefined, "endpoint-pin");
+    const icon = element("ha-icon");
+    icon.setAttribute("icon", role === "origin" ? "mdi:map-marker" : "mdi:flag-checkered");
+    icon.setAttribute("aria-hidden", "true");
+    pin.append(icon);
+    const label = element("span", undefined, `endpoint-label ${above ? "endpoint-above" : "endpoint-below"}`);
+    label.append(element("span", this.t[role], "endpoint-role"), element("strong", stop.name));
+    content.append(pin, label);
+    L.marker([stop.latitude, stop.longitude], {
+      pane: "routeEndpoints", interactive: false, keyboard: false,
+      icon: L.divIcon({ html: content, className: "route-endpoint", iconSize: [24, 24] }),
+    }).addTo(this.endpointLayer);
+  }
+
+  positionEndpointLabels() {
+    const width = this.map.getSize().x;
+    for (const marker of this.endpointLayer.getLayers()) {
+      const label = marker.getElement()?.querySelector(".endpoint-label");
+      if (!label) continue;
+      const x = this.map.latLngToContainerPoint(marker.getLatLng()).x;
+      label.hidden = x < 0 || x > width;
+      if (label.hidden) continue;
+      // Keep labels readable near the edge without moving the station pins.
+      const margin = label.offsetWidth / 2 + 8;
+      const center = Math.min(width - margin, Math.max(margin, x));
+      label.style.setProperty("--endpoint-shift", `${center - x}px`);
     }
   }
 
@@ -616,6 +654,12 @@ class EuskotrenPlanner extends HTMLElement {
     if (!this.isConnected) return;
     this.ensureMap();
     this.routeLayer.clearLayers();
+    this.endpointLayer.clearLayers();
+    const origin = journey.legs[0].stops[0];
+    const destination = journey.legs.at(-1).stops.at(-1);
+    const originAbove = origin.latitude >= destination.latitude;
+    this.addJourneyEndpoint(origin, "origin", originAbove);
+    this.addJourneyEndpoint(destination, "destination", !originAbove);
     this.mapLines.replaceChildren(journeyLines(journey.legs));
     this.stopList.replaceChildren();
     if (journey.transfers) {
@@ -645,7 +689,7 @@ class EuskotrenPlanner extends HTMLElement {
         const transfer = journey.transfers && (
           (index === 0 && stopIndex === leg.stops.length - 1) || (index === 1 && stopIndex === 0)
         );
-        if (!markers.has(stop.id)) {
+        if (stop.id !== origin.id && stop.id !== destination.id && !markers.has(stop.id)) {
           const marker = L.circleMarker([stop.latitude, stop.longitude], {
             radius: endpoint ? 7 : 4, color, fillColor: stop.skipped ? "#778a88" : "#fff",
             fillOpacity: 1, weight: endpoint ? 3 : 2,
@@ -662,7 +706,9 @@ class EuskotrenPlanner extends HTMLElement {
       this.stopList.append(label, list);
     }
     for (const marker of markers.values()) marker.addTo(this.routeLayer);
-    this.fitMap(this.routeLayer.getBounds(), 15);
+    const bounds = this.routeLayer.getBounds()
+      .extend([origin.latitude, origin.longitude]).extend([destination.latitude, destination.longitude]);
+    this.fitMap(bounds, 15);
   }
 }
 
