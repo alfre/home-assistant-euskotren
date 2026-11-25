@@ -2,9 +2,17 @@
 
 Consulta las salidas del Topo desde la barra lateral de Home Assistant. Elige el origen, el destino, la fecha y la hora a partir de la que quieres salir. Cada resultado muestra la salida, la llegada, la duración, las líneas, las paradas y un mapa interactivo. Si el viaje requiere un transbordo en una misma estación, el buscador combina hasta dos trenes.
 
-## Instalación para la validación
+## Instalación
 
-Requiere Home Assistant 2026.11 o posterior. Copia la carpeta `custom_components/euskotren` del repositorio dentro de `custom_components` en el directorio de configuración de Home Assistant y reinicia. En **Ajustes → Dispositivos y servicios → Añadir integración**, busca **Euskotren Topo**. Una vez configurada, abre **Euskotren Topo** en la barra lateral.
+Requiere Home Assistant 2026.11 o posterior.
+
+[![Abrir Euskotren Topo en Marketplace](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=alfre&repository=home-assistant-euskotren&category=integration)
+
+Abre el enlace, añade el repositorio personalizado si Marketplace te lo pide, instala la integración y reinicia Home Assistant.
+
+Para la instalación manual, copia la carpeta `custom_components/euskotren` del repositorio dentro de `custom_components` en el directorio de configuración de Home Assistant y reinicia.
+
+En **Ajustes → Dispositivos y servicios → Añadir integración**, busca **Euskotren Topo**. Una vez configurada, abre **Euskotren Topo** en la barra lateral.
 
 ## Horarios y mapa
 
