@@ -210,6 +210,10 @@ class EuskotrenPlanner extends HTMLElement {
         </div>
       </main>`;
     const find = (selector) => this.shadowRoot.querySelector(selector);
+    this.mapStyles = [...this.shadowRoot.querySelectorAll('link[rel="stylesheet"]')];
+    for (const stylesheet of this.mapStyles) {
+      stylesheet.addEventListener("load", () => this.resizeMap());
+    }
     this.menu = find("ha-menu-button");
     this.menu.hass = this._hass;
     this.menu.narrow = this._narrow;
@@ -425,8 +429,9 @@ class EuskotrenPlanner extends HTMLElement {
   }
 
   resizeMap() {
-    // The map can have no height until the planner stylesheet has loaded.
-    if (!this.map || !this.mapNode.clientWidth || !this.mapNode.clientHeight) return;
+    // Before the styles load, Leaflet's controls can give the map a provisional height.
+    if (!this.map || !this.mapStyles.every((stylesheet) => stylesheet.sheet)) return;
+    if (!this.mapNode.clientWidth || !this.mapNode.clientHeight) return;
     const fit = this.pendingMapFit;
     this.map.invalidateSize({ pan: !fit, debounceMoveend: true });
     if (fit) {
