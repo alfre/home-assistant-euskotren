@@ -29,7 +29,7 @@ const copy = {
     live: "En tiempo real", scheduled: "Programado", partial: "Previsión parcial",
     planned: "Hora programada", skipped: "Sin parada",
     towards: (station) => `hacia ${station}`,
-    showFleet: "Ver trenes estimados ahora", hideFleet: "Ocultar trenes estimados",
+    showFleet: "Mostrar posiciones estimadas", hideFleet: "Ocultar posiciones estimadas",
     network: "Mapa del Topo", fleetLoading: "Calculando posiciones estimadas…",
     fleetUnavailable: "No se pudieron actualizar las posiciones estimadas.",
     fleetEmpty: "No hay trenes en servicio según el horario disponible.",
@@ -60,7 +60,7 @@ const copy = {
     live: "Real time", scheduled: "Scheduled", partial: "Partial prediction",
     planned: "Scheduled time", skipped: "Does not stop",
     towards: (station) => `towards ${station}`,
-    showFleet: "Show estimated trains now", hideFleet: "Hide estimated trains",
+    showFleet: "Show estimated positions", hideFleet: "Hide estimated positions",
     network: "Topo network map", fleetLoading: "Calculating estimated positions…",
     fleetUnavailable: "Estimated train positions could not be refreshed.",
     fleetEmpty: "No trains are in service according to the available timetable.",
@@ -277,6 +277,7 @@ class EuskotrenPlanner extends HTMLElement {
     this.status.textContent = this.t.loading;
     try {
       const catalog = await this.action("list_stations");
+      this.linePaths = catalog.line_paths ?? {};
       this.stationBounds = L.latLngBounds(
         catalog.stations.map((station) => [station.latitude, station.longitude]),
       );
@@ -404,6 +405,8 @@ class EuskotrenPlanner extends HTMLElement {
         maxZoom: 19, referrerPolicy: "strict-origin-when-cross-origin",
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
       }).addTo(this.map);
+      this.map.createPane("networkTrack").style.zIndex = "390";
+      this.networkLayer = L.layerGroup().addTo(this.map);
       this.routeLayer = L.featureGroup().addTo(this.map);
       this.fleetLayer = L.layerGroup().addTo(this.map);
     }
@@ -418,10 +421,19 @@ class EuskotrenPlanner extends HTMLElement {
     if (!enabled) {
       clearTimeout(this.fleetTimer);
       clearInterval(this.fleetAnimation);
+      this.networkLayer?.clearLayers();
       this.clearFleet();
       return;
     }
     this.ensureMap();
+    for (const [index, line] of ["T1", "E1", "T0"].entries()) {
+      const path = this.linePaths[line];
+      if (!path?.length) continue;
+      L.polyline(path, {
+        pane: "networkTrack", interactive: false,
+        color: lineInfo.get(line).stroke, weight: 10 - index * 3, opacity: 0.8,
+      }).addTo(this.networkLayer);
+    }
     this.map.invalidateSize({ pan: false });
     if (!this.selected) {
       this.map.fitBounds(this.stationBounds, { padding: [25, 25], animate: false });

@@ -4,7 +4,7 @@ import csv
 from bisect import bisect_left, bisect_right
 from collections import defaultdict
 from collections.abc import Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, time, timedelta
 from io import BytesIO, TextIOWrapper
 from itertools import pairwise
@@ -29,6 +29,8 @@ WEEKDAYS = (
 MAX_TRANSFER = 3600
 MAX_SHAPE_GAP_METERS = 1000
 MAX_STOP_OFFSET_METERS = 250
+
+type Coordinates = tuple[float, float]
 
 
 def _rows(
@@ -163,12 +165,33 @@ class Schedule:
     first_day: date
     last_day: date
     latest_offset: int
+    line_paths: dict[str, list[Coordinates]] = field(init=False)
+
+    def __post_init__(self) -> None:
+        """Build each line's overview from its most complete published trip."""
+        longest: dict[str, Trip] = {}
+        for trip in self.trips:
+            previous = longest.get(trip.line)
+            if previous is None or (len(trip.calls), trip.shape in self.shapes) > (
+                len(previous.calls),
+                previous.shape in self.shapes,
+            ):
+                longest[trip.line] = trip
+        self.line_paths = {}
+        for line, trip in longest.items():
+            stations = [self.stations[call.station] for call in trip.calls]
+            self.line_paths[line] = _route_geometry(
+                self.shapes.get(trip.shape, []),
+                trip.calls,
+                [(station.latitude, station.longitude) for station in stations],
+            )
 
     def catalog(self) -> dict:
         return {
             "first_date": self.first_day.isoformat(),
             "last_date": self.last_day.isoformat(),
             "timezone": TIME_ZONE,
+            "line_paths": self.line_paths,
             "stations": [
                 station._asdict()
                 for station in sorted(
@@ -423,9 +446,6 @@ class Schedule:
             "stops": stops,
             "polyline": [list(point) for point in line],
         }
-
-
-type Coordinates = tuple[float, float]
 
 
 def _boarding_key(leg: Leg) -> tuple[str, int, int]:

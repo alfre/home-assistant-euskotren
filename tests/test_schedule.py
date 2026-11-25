@@ -65,6 +65,12 @@ class ScheduleTests(unittest.TestCase):
     def journeys(self, day=date(2026, 11, 25), after=time(9), live=None):
         return self.schedule.search("a", "c", day, after, 10, live)["journeys"]
 
+    def test_station_catalog_contains_the_full_line_path(self):
+        self.assertEqual(
+            self.schedule.catalog()["line_paths"],
+            {"T1": [(43.30, -1.99), (43.32, -1.97), (43.33, -1.93)]},
+        )
+
     def test_same_station_transfer_between_platforms(self):
         first, direct = self.journeys()
         self.assertEqual(first["transfers"], 1)
