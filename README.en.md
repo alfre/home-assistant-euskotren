@@ -45,7 +45,7 @@ Select **Show estimated trains now** to see trains in service with or without a 
 
 The response includes a `journeys` list with ISO 8601 times, duration in minutes, prediction flags, and the legs of each journey with their stops and coordinates.
 
-`euskotren.get_train_positions` returns estimated positions for trains currently in service, along with their line, destination, current or next stop, and timing source.
+`euskotren.get_train_positions` returns each active train's estimated position, next stop, estimated arrival time, and timing source. If a train is stopped, it also includes the station it is at.
 
 ## Sources and license
 

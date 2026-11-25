@@ -173,10 +173,16 @@ class ScheduleTests(unittest.TestCase):
         trains = self.schedule.train_positions(at)["trains"]
         self.assertEqual(len(trains), 1)
         self.assertEqual(trains[0]["at_station"], "B")
+        self.assertEqual(trains[0]["next_station"], "C")
+        self.assertEqual(
+            trains[0]["arrival_timestamp"],
+            int(at.replace(minute=34, second=0).timestamp()),
+        )
         self.assertEqual(trains[0]["latitude"], 43.32)
         moving = self.schedule.train_positions(at.replace(minute=27))["trains"][0]
         self.assertEqual(moving["id"], trains[0]["id"])
         self.assertEqual(moving["next_station"], "C")
+        self.assertEqual(moving["arrival_timestamp"], trains[0]["arrival_timestamp"])
         self.assertGreater(moving["longitude"], -1.97)
         self.assertLess(moving["longitude"], -1.93)
         self.assertEqual(moving["path"][0], (43.32, -1.97, 0.0))
@@ -193,6 +199,9 @@ class ScheduleTests(unittest.TestCase):
         moving = self.schedule.train_positions(at, delay)["trains"][0]
         self.assertTrue(moving["realtime"])
         self.assertEqual(moving["next_station"], "C")
+        self.assertEqual(
+            moving["arrival_timestamp"], int(at.replace(minute=39).timestamp())
+        )
         cancellation = Realtime(int(at.timestamp()), {key: TripUpdate(True, None, ())})
         self.assertEqual(
             self.schedule.train_positions(at.replace(minute=27), cancellation)[
@@ -209,3 +218,6 @@ class ScheduleTests(unittest.TestCase):
         self.assertEqual(len(trains), 1)
         self.assertTrue(trains[0]["id"].startswith("night|"))
         self.assertEqual(trains[0]["next_station"], "C")
+        self.assertEqual(
+            trains[0]["arrival_timestamp"], int(at.replace(minute=39).timestamp())
+        )

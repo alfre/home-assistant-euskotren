@@ -45,7 +45,7 @@ Pulsa **Ver trenes estimados ahora** para ver los trenes en servicio, con o sin 
 
 La respuesta contiene `journeys` con horas ISO 8601, duración en minutos, indicadores de previsión y un listado de tramos con paradas y coordenadas.
 
-`euskotren.get_train_positions` devuelve las posiciones estimadas de los trenes en servicio en ese momento, con la línea, el destino, la parada actual o siguiente y la procedencia de los tiempos.
+`euskotren.get_train_positions` devuelve las posiciones estimadas de los trenes en servicio, la próxima parada, su hora estimada de llegada y la procedencia de los tiempos. Si el tren está detenido, también indica la estación en la que está.
 
 ## Fuentes y licencia
 

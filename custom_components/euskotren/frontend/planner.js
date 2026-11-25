@@ -35,6 +35,7 @@ const copy = {
     fleetEmpty: "No hay trenes en servicio según el horario disponible.",
     fleetStatus: (count, time) => `Posiciones estimadas · ${count} ${count === 1 ? "tren" : "trenes"} · ${time}`,
     estimate: "Posición estimada", nextStation: (station) => `Próxima parada: ${station}`,
+    estimatedArrival: "Llegada estimada",
     atStation: (station) => `En ${station}`,
     predictedTimes: "Según el horario y las previsiones", scheduledTimes: "Según el horario",
   },
@@ -65,6 +66,7 @@ const copy = {
     fleetEmpty: "No trains are in service according to the available timetable.",
     fleetStatus: (count, time) => `Estimated positions · ${count} ${count === 1 ? "train" : "trains"} · ${time}`,
     estimate: "Estimated position", nextStation: (station) => `Next stop: ${station}`,
+    estimatedArrival: "Estimated arrival",
     atStation: (station) => `At ${station}`,
     predictedTimes: "Based on the timetable and predictions", scheduledTimes: "Based on the timetable",
   },
@@ -463,11 +465,23 @@ class EuskotrenPlanner extends HTMLElement {
     }
     for (const train of snapshot.trains) {
       const heading = [train.line, train.headsign && this.t.towards(train.headsign)].filter(Boolean).join(" ");
-      const stop = train.at_station ? this.t.atStation(train.at_station) : this.t.nextStation(train.next_station);
       const information = element("div");
       const source = train.realtime ? this.t.predictedTimes : this.t.scheduledTimes;
-      information.append(element("strong", heading), element("div", stop),
-        element("div", `${this.t.estimate} · ${source}`));
+      information.append(element("strong", heading));
+      if (train.at_station) information.append(element("div", this.t.atStation(train.at_station)));
+      if (train.next_station) information.append(element("div", this.t.nextStation(train.next_station)));
+      if (Number.isFinite(train.arrival_timestamp)) {
+        const arrival = new Date(train.arrival_timestamp * 1000);
+        const arrivalDate = this.dateFormat.format(arrival);
+        const snapshotDate = this.dateFormat.format(snapshot.calculated_at * 1000);
+        const clock = this.timeFormat.format(arrival);
+        const time = element("time", arrivalDate === snapshotDate ? clock : `${clock} · ${arrivalDate}`);
+        time.dateTime = arrival.toISOString();
+        const row = element("div", undefined, "train-eta");
+        row.append(element("span", this.t.estimatedArrival), time);
+        information.append(row);
+      }
+      information.append(element("div", `${this.t.estimate} · ${source}`));
       let marker = this.fleetMarkers.get(train.id);
       if (!marker) {
         marker = L.marker([train.latitude, train.longitude], {

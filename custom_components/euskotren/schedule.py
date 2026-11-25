@@ -321,15 +321,18 @@ class Schedule:
                 if before.departure <= timestamp < after.arrival:
                     trains.append(self._train_in_motion(run, start, end, timestamp))
                     break
-                if after.arrival <= timestamp < after.departure:
-                    station = self.stations[run.trip.calls[end].station]
+                if before.arrival <= timestamp < before.departure:
+                    station = self.stations[run.trip.calls[start].station]
+                    next_station = self.stations[run.trip.calls[end].station]
                     trains.append(
                         {
                             **_train_identity(run),
                             "latitude": station.latitude,
                             "longitude": station.longitude,
                             "at_station": station.name,
-                            "realtime": after.live,
+                            "next_station": next_station.name,
+                            "arrival_timestamp": after.arrival,
+                            "realtime": before.live or after.arrival_live,
                         }
                     )
                     break
