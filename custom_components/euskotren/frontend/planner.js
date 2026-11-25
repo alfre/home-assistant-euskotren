@@ -1,7 +1,11 @@
 import * as L from "./leaflet/leaflet-src.esm.js";
 
 const zone = "Europe/Madrid";
-const colors = ["#087c6a", "#9452ca"];
+const lineColors = new Map([
+  ["T0", { background: "#B77FA0", text: "#21111C", stroke: "#884768" }],
+  ["T1", { background: "#B0BC22", text: "#202600", stroke: "#5C6900" }],
+  ["E1", { background: "#005A8B", text: "#FFFFFF", stroke: "#005A8B" }],
+]);
 const copy = {
   es: {
     title: "Planifica tu viaje",
@@ -19,7 +23,7 @@ const copy = {
     transferAt: (station) => `1 transbordo en ${station}`,
     live: "En tiempo real", scheduled: "Programado", partial: "Previsión parcial",
     planned: "Hora programada", skipped: "Sin parada",
-    trainTo: (line, station) => `${line} hacia ${station}`,
+    towards: (station) => `hacia ${station}`,
   },
   en: {
     title: "Plan your journey",
@@ -37,7 +41,7 @@ const copy = {
     transferAt: (station) => `1 change at ${station}`,
     live: "Real time", scheduled: "Scheduled", partial: "Partial prediction",
     planned: "Scheduled time", skipped: "Does not stop",
-    trainTo: (line, station) => `${line} towards ${station}`,
+    towards: (station) => `towards ${station}`,
   },
 };
 
@@ -46,6 +50,33 @@ function element(tag, text, className) {
   if (text !== undefined) node.textContent = text;
   if (className) node.className = className;
   return node;
+}
+
+function lineBadge(line) {
+  const badge = element("span", line, "line-badge");
+  const color = lineColors.get(line);
+  if (color) {
+    badge.style.setProperty("--line-background", color.background);
+    badge.style.setProperty("--line-text", color.text);
+  }
+  return badge;
+}
+
+function journeyLines(legs) {
+  const group = element("span", undefined, "journey-lines");
+  const icon = element("ha-icon", undefined, "train-icon");
+  icon.setAttribute("icon", "mdi:train");
+  icon.setAttribute("aria-hidden", "true");
+  group.append(icon);
+  for (const [index, leg] of legs.entries()) {
+    if (index) {
+      const arrow = element("span", "→", "line-arrow");
+      arrow.setAttribute("aria-hidden", "true");
+      group.append(arrow);
+    }
+    group.append(lineBadge(leg.line));
+  }
+  return group;
 }
 
 function madridDateAndTime() {
@@ -118,7 +149,7 @@ class EuskotrenPlanner extends HTMLElement {
         <div class="results" hidden>
           <section class="journeys"><h2></h2><div class="options"></div></section>
           <section class="detail">
-            <h2></h2>
+            <div class="map-heading"><h2></h2><div class="map-lines"></div></div>
             <div class="map"></div>
             <h3></h3>
             <div class="stops"></div>
@@ -135,6 +166,7 @@ class EuskotrenPlanner extends HTMLElement {
     this.results = find(".results");
     this.options = find(".options");
     this.mapNode = find(".map");
+    this.mapLines = find(".map-lines");
     this.stopList = find(".stops");
     this.button = find(".primary");
     this.fields = Object.fromEntries(
@@ -246,11 +278,10 @@ class EuskotrenPlanner extends HTMLElement {
       element("span", `${Math.ceil(journey.duration_minutes)} min`),
     );
     const detail = element("span", undefined, "journey-meta");
-    const lines = element("span", journey.legs.map((leg) => leg.line).join(" + "), "line");
     const bothLive = journey.departure_realtime && journey.arrival_realtime;
     const info = journey.realtime ? (bothLive ? this.t.live : this.t.partial) : this.t.scheduled;
     const change = journey.transfers ? this.t.transferAt(journey.legs[0].destination.name) : this.t.direct;
-    detail.append(lines, element("span", change, "journey-transfer"),
+    detail.append(journeyLines(journey.legs), element("span", change, "journey-transfer"),
       element("span", info, journey.realtime ? "live" : ""));
     button.title = `${this.t.planned} · ${this.formatTime(journey.scheduled_departure)} → ${this.formatTime(journey.scheduled_arrival)}`;
     button.append(top, detail);
@@ -277,12 +308,14 @@ class EuskotrenPlanner extends HTMLElement {
       this.route = L.featureGroup().addTo(this.map);
     }
     this.route.clearLayers();
+    this.mapLines.replaceChildren(journeyLines(journey.legs));
     this.stopList.replaceChildren();
     const markers = new Map();
     for (const [index, leg] of journey.legs.entries()) {
-      const color = colors[index];
-      L.polyline(leg.polyline, { color, weight: 5, opacity: 0.9 }).addTo(this.route);
-      const label = element("h4", this.t.trainTo(leg.line, leg.headsign || leg.destination.name));
+      const color = lineColors.get(leg.line)?.stroke ?? "#087c6a";
+      L.polyline(leg.polyline, { color, weight: 5, opacity: 0.95 }).addTo(this.route);
+      const label = element("h4", undefined, "leg-heading");
+      label.append(lineBadge(leg.line), element("span", this.t.towards(leg.headsign || leg.destination.name)));
       const list = element("ol");
       list.style.setProperty("--route-color", color);
       for (const [stopIndex, stop] of leg.stops.entries()) {
