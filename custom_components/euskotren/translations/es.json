@@ -1,0 +1,37 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configurar Euskotren Topo",
+        "description": "Añade el buscador de trayectos del Topo a la barra lateral. No hace falta una cuenta ni una clave de API."
+      }
+    },
+    "abort": {
+      "already_configured": "Euskotren Topo ya está configurado."
+    }
+  },
+  "services": {
+    "list_stations": {
+      "name": "Listar estaciones del Topo",
+      "description": "Devuelve los identificadores, las coordenadas y las fechas cubiertas por el horario."
+    },
+    "search_journeys": {
+      "name": "Buscar trayectos del Topo",
+      "description": "Devuelve salidas, llegadas, duración y paradas. Usa los identificadores obtenidos con Listar estaciones del Topo.",
+      "fields": {
+        "origin": {"name": "Origen", "description": "Identificador de la estación de salida."},
+        "destination": {"name": "Destino", "description": "Identificador de la estación de llegada."},
+        "date": {"name": "Fecha del viaje", "description": "Día de salida. Por defecto se usa el día de hoy."},
+        "time": {"name": "Salida a partir de", "description": "Hora en Europe/Madrid. Por defecto se usa la hora actual para hoy y medianoche para los demás días."},
+        "limit": {"name": "Resultados", "description": "Número máximo de trayectos devueltos."}
+      }
+    }
+  },
+  "exceptions": {
+    "not_loaded": {"message": "Configura Euskotren Topo y espera a que termine de cargar."},
+    "unavailable": {"message": "El horario de Euskotren no está disponible en este momento."},
+    "unknown_station": {"message": "Elige una estación del horario publicado del Topo."},
+    "same_station": {"message": "Elige dos estaciones distintas."},
+    "date_out_of_range": {"message": "El horario publicado cubre del {first} al {last}."}
+  }
+}

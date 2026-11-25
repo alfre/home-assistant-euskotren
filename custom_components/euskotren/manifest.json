@@ -1,0 +1,13 @@
+{
+  "domain": "euskotren",
+  "name": "Euskotren Topo",
+  "codeowners": ["@alfre"],
+  "config_flow": true,
+  "dependencies": ["frontend", "panel_custom"],
+  "documentation": "https://github.com/alfre/home-assistant-euskotren",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/alfre/home-assistant-euskotren/issues",
+  "requirements": ["gtfs-realtime-bindings==2.2.0"],
+  "version": "0.1.0"
+}

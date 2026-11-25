@@ -1,0 +1,26 @@
+list_stations:
+search_journeys:
+  fields:
+    origin:
+      required: true
+      example: "ES:Euskotren:StopPlace:2580:"
+      selector:
+        text:
+    destination:
+      required: true
+      example: "ES:Euskotren:StopPlace:2582:"
+      selector:
+        text:
+    date:
+      selector:
+        date:
+    time:
+      selector:
+        time:
+    limit:
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 30
+          mode: box

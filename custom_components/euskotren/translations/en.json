@@ -1,0 +1,37 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Euskotren Topo",
+        "description": "Add the Topo journey planner to the sidebar. No account or API key is required."
+      }
+    },
+    "abort": {
+      "already_configured": "Euskotren Topo is already configured."
+    }
+  },
+  "services": {
+    "list_stations": {
+      "name": "List Topo stations",
+      "description": "Return station IDs, coordinates and the dates covered by the timetable."
+    },
+    "search_journeys": {
+      "name": "Search Topo journeys",
+      "description": "Return departures, arrivals, durations and stops. Use station IDs from List Topo stations.",
+      "fields": {
+        "origin": {"name": "Origin", "description": "Station ID of the departure station."},
+        "destination": {"name": "Destination", "description": "Station ID of the arrival station."},
+        "date": {"name": "Travel date", "description": "Departures on this date. Defaults to today."},
+        "time": {"name": "Earliest departure", "description": "Time in Europe/Madrid. Defaults to now for today or midnight for other dates."},
+        "limit": {"name": "Results", "description": "Maximum number of journeys to return."}
+      }
+    }
+  },
+  "exceptions": {
+    "not_loaded": {"message": "Set up Euskotren Topo and wait for it to load."},
+    "unavailable": {"message": "The Euskotren timetable is temporarily unavailable."},
+    "unknown_station": {"message": "Choose a station from the published Topo timetable."},
+    "same_station": {"message": "Choose two different stations."},
+    "date_out_of_range": {"message": "The published timetable covers {first} through {last}."}
+  }
+}
