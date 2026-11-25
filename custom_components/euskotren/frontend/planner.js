@@ -1,5 +1,12 @@
 import * as L from "./leaflet/leaflet-src.esm.js";
 
+const assetVersion = new URL(import.meta.url).search;
+function plannerAsset(path) {
+  const url = new URL(path, import.meta.url);
+  url.search = assetVersion;
+  return url.href;
+}
+
 const zone = "Europe/Madrid";
 const fleetRefresh = 15000;
 const lineInfo = new Map([
@@ -183,8 +190,8 @@ class EuskotrenPlanner extends HTMLElement {
       timeZone: zone, hour: "2-digit", minute: "2-digit", hourCycle: "h23",
     });
     this.shadowRoot.innerHTML = `
-      <link rel="stylesheet" href="${new URL("./leaflet/leaflet.css", import.meta.url)}">
-      <link rel="stylesheet" href="${new URL("./planner.css", import.meta.url)}">
+      <link rel="stylesheet" href="${plannerAsset("./leaflet/leaflet.css")}">
+      <link rel="stylesheet" href="${plannerAsset("./planner.css")}">
       <header><ha-menu-button></ha-menu-button><span>Euskotren Topo</span></header>
       <main>
         <section class="search">
@@ -518,7 +525,7 @@ class EuskotrenPlanner extends HTMLElement {
     if (this.terrainStyles) return this.terrainStyles;
     const stylesheet = document.createElement("link");
     stylesheet.rel = "stylesheet";
-    stylesheet.href = new URL("./maplibre/maplibre-gl.css", import.meta.url);
+    stylesheet.href = plannerAsset("./maplibre/maplibre-gl.css");
     this.terrainStyles = new Promise((resolve, reject) => {
       stylesheet.addEventListener("load", resolve, { once: true });
       stylesheet.addEventListener("error", () => {
@@ -547,7 +554,7 @@ class EuskotrenPlanner extends HTMLElement {
     this.terrainToggle.disabled = true;
     this.showTerrainStatus(this.t.terrainLoading);
     try {
-      const [{ TerrainMap }] = await Promise.all([import("./terrain-map.js"), this.loadTerrainStyles()]);
+      const [{ TerrainMap }] = await Promise.all([import(plannerAsset("./terrain-map.js")), this.loadTerrainStyles()]);
       if (this.terrainRequest !== request) return;
       const terrain = this.terrain = new TerrainMap(this.terrainNode, this.map, () => {
         this.closeTerrain(this.t.terrainUnavailable);

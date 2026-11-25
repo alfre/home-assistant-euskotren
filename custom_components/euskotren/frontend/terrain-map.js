@@ -3,7 +3,9 @@ import {
   setWorkerUrl,
 } from "./maplibre/maplibre-gl.mjs";
 
-setWorkerUrl(new URL("./maplibre/maplibre-gl-worker.mjs", import.meta.url).href);
+const workerUrl = new URL("./maplibre/maplibre-gl-worker.mjs", import.meta.url);
+workerUrl.search = new URL(import.meta.url).search;
+setWorkerUrl(workerUrl.href);
 
 const collection = (features = []) => ({ type: "FeatureCollection", features });
 const coordinates = ({ lat, lng }) => [lng, lat];
