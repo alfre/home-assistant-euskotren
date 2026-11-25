@@ -185,6 +185,7 @@ class EuskotrenPlanner extends HTMLElement {
         select.replaceChildren(new Option(this.t.choose, ""));
         for (const station of catalog.stations) select.add(new Option(station.name, station.id));
       }
+      if (catalog.default_origin) this.fields.origin.value = catalog.default_origin;
       const [today, now] = madridDateAndTime();
       this.fields.date.min = catalog.first_date;
       this.fields.date.max = catalog.last_date;

@@ -16,6 +16,8 @@ Para la instalación manual, copia la carpeta `custom_components/euskotren` del 
 
 En **Ajustes → Dispositivos y servicios → Añadir integración**, busca **Euskotren Topo**. Una vez configurada, abre **Euskotren Topo** en la barra lateral.
 
+Para elegir tu estación habitual, abre **Ajustes → Dispositivos y servicios → Euskotren Topo** y entra en las opciones de la integración. El buscador seleccionará ese origen al abrirse y podrás cambiarlo para cada viaje. Elige **Sin origen predeterminado** si prefieres que aparezca en blanco.
+
 ## Horarios y mapa
 
 - El buscador cubre las líneas T0 y T1 y el tramo que comparten con la E1. Los andenes de una misma estación se agrupan en el selector.
@@ -25,7 +27,7 @@ En **Ajustes → Dispositivos y servicios → Añadir integración**, busca **Eu
 
 ## Automatizaciones
 
-`euskotren.list_stations` devuelve las estaciones y las fechas cubiertas. Usa sus identificadores con `euskotren.search_journeys`. La fecha, la hora y el límite son opcionales. La fecha predeterminada es hoy. La hora predeterminada es la actual para hoy y las 00:00 para otro día. El límite predeterminado es 10, con un máximo de 30.
+`euskotren.list_stations` devuelve las estaciones, el origen predeterminado y las fechas cubiertas. Usa los identificadores con `euskotren.search_journeys`. Puedes omitir el origen si has configurado uno en la integración. La fecha, la hora y el límite también son opcionales. La fecha predeterminada es hoy. La hora predeterminada es la actual para hoy y las 00:00 para otro día. El límite predeterminado es 10, con un máximo de 30.
 
 ```yaml
 - action: euskotren.search_journeys

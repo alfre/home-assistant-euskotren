@@ -10,6 +10,23 @@
       "already_configured": "Euskotren Topo is already configured."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Default origin",
+        "data": {"default_origin": "Origin station"},
+        "data_description": {"default_origin": "The planner selects this station when it opens."}
+      }
+    },
+    "abort": {
+      "unavailable": "The Euskotren timetable is temporarily unavailable."
+    }
+  },
+  "selector": {
+    "default_origin": {
+      "options": {"none": "No default origin"}
+    }
+  },
   "services": {
     "list_stations": {
       "name": "List Topo stations",
@@ -19,7 +36,7 @@
       "name": "Search Topo journeys",
       "description": "Return departures, arrivals, durations and stops. Use station IDs from List Topo stations.",
       "fields": {
-        "origin": {"name": "Origin", "description": "Station ID of the departure station."},
+        "origin": {"name": "Origin", "description": "Station ID of the departure station. If omitted, the integration uses its default origin."},
         "destination": {"name": "Destination", "description": "Station ID of the arrival station."},
         "date": {"name": "Travel date", "description": "Departures on this date. Defaults to today."},
         "time": {"name": "Earliest departure", "description": "Time in Europe/Madrid. Defaults to now for today or midnight for other dates."},
@@ -30,6 +47,7 @@
   "exceptions": {
     "not_loaded": {"message": "Set up Euskotren Topo and wait for it to load."},
     "unavailable": {"message": "The Euskotren timetable is temporarily unavailable."},
+    "origin_required": {"message": "Specify an origin or choose a default origin station in Euskotren Topo."},
     "unknown_station": {"message": "Choose a station from the published Topo timetable."},
     "same_station": {"message": "Choose two different stations."},
     "date_out_of_range": {"message": "The published timetable covers {first} through {last}."}

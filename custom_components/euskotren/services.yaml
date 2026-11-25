@@ -2,7 +2,6 @@ list_stations:
 search_journeys:
   fields:
     origin:
-      required: true
       example: "ES:Euskotren:StopPlace:2580:"
       selector:
         text:

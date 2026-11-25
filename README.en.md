@@ -16,6 +16,8 @@ For a manual installation, copy the repository's `custom_components/euskotren` f
 
 Go to **Settings → Devices & services → Add integration** and search for **Euskotren Topo**. After setup, open **Euskotren Topo** from the sidebar.
 
+To set your usual departure station, open **Settings → Devices & services → Euskotren Topo** and go to the integration options. The planner selects it when it opens, and you can change it for each journey. Choose **No default origin** to leave the field blank.
+
 ## Timetables and map
 
 - The planner covers lines T0 and T1 and the section they share with E1. Platforms at the same station are grouped in the station picker.
@@ -25,7 +27,7 @@ Go to **Settings → Devices & services → Add integration** and search for **E
 
 ## Automations
 
-`euskotren.list_stations` returns station IDs and the dates covered. Pass those IDs to `euskotren.search_journeys`. The date, time, and result limit are optional. The default is today from the current time, or from midnight if you choose another date. The default limit is 10, with a maximum of 30.
+`euskotren.list_stations` returns station IDs, the default origin, and the dates covered. Pass the station IDs to `euskotren.search_journeys`. You can omit the origin if you have set a default in the integration. The date, time, and result limit are optional. The default is today from the current time, or from midnight if you choose another date. The default limit is 10, with a maximum of 30.
 
 ```yaml
 - action: euskotren.search_journeys
