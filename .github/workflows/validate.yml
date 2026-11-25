@@ -16,12 +16,14 @@ jobs:
       - uses: home-assistant/actions/hassfest@master
 
   hacs:
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: hacs/action@main
         with:
           category: integration
+          comment: false
 
   routing:
     runs-on: ubuntu-latest

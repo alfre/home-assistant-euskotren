@@ -7,6 +7,7 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
 from .client import EuskotrenClient, TimetableUnavailable
@@ -14,6 +15,7 @@ from .const import DOMAIN, NAME, STATIC_URL, VERSION
 from .services import async_setup_services
 
 type EuskotrenConfigEntry = ConfigEntry[EuskotrenClient]
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
