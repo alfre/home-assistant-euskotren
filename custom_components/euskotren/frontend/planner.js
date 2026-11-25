@@ -187,8 +187,8 @@ class EuskotrenPlanner extends HTMLElement {
           <section class="journeys"><h2></h2><div class="options"></div></section>
           <section class="detail">
             <div class="map-heading"><h2></h2><div class="map-lines"></div></div>
-            <div class="map"></div>
             <p class="fleet-status" hidden></p>
+            <div class="map"></div>
             <h3></h3>
             <div class="stops"></div>
           </section>
@@ -430,8 +430,9 @@ class EuskotrenPlanner extends HTMLElement {
       const heading = [train.line, train.headsign && this.t.towards(train.headsign)].filter(Boolean).join(" ");
       const stop = train.at_station ? this.t.atStation(train.at_station) : this.t.nextStation(train.next_station);
       const information = element("div");
+      const source = train.realtime ? this.t.predictedTimes : this.t.scheduledTimes;
       information.append(element("strong", heading), element("div", stop),
-        element("div", train.realtime ? this.t.predictedTimes : this.t.scheduledTimes));
+        element("div", `${this.t.estimate} · ${source}`));
       let marker = this.fleetMarkers.get(train.id);
       if (!marker) {
         marker = L.marker([train.latitude, train.longitude], {

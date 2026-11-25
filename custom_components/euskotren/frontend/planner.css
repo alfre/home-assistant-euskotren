@@ -91,7 +91,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 .journey-transfer { color: var(--primary-text-color); font-weight: 700; }
 .live { color: var(--accent); font-weight: 600; }
 .map { width: 100%; height: clamp(265px, 48vh, 440px); border-radius: 10px; background: #e0ece8; overflow: hidden; }
-.fleet-status { color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+.fleet-status { color: var(--muted); font-size: 13px; margin: 0 0 10px; }
 .estimate-marker { display: grid; place-items: center; }
 .estimate-marker .line-badge { border: 2px solid #fff; box-shadow: 0 1px 4px #0008; }
 .stops ol { list-style: none; margin: 0 0 0 5px; padding: 0 0 0 12px; border-inline-start: 2px solid var(--route-color); }
