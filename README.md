@@ -9,7 +9,7 @@ Requiere Home Assistant 2026.11 o posterior. Copia la carpeta `custom_components
 ## Horarios y mapa
 
 - El buscador cubre las líneas T0 y T1 y el tramo que comparten con la E1. Los andenes de una misma estación se agrupan en el selector.
-- El calendario incluye los servicios especiales y las excepciones festivas publicados. El panel muestra el intervalo de fechas disponible. Las horas se muestran en la zona `Europe/Madrid`, incluidas las llegadas después de medianoche.
+- El calendario aplica los servicios especiales y las excepciones festivas publicados. El panel muestra el intervalo de fechas disponible, que puede incluir días sin salidas publicadas. Las horas se muestran en la zona `Europe/Madrid`, incluidas las llegadas después de medianoche.
 - Las estimaciones se aplican cuando hay una actualización reciente asociada al tren y al día de servicio. Si falta una previsión, se muestra el horario programado de ese punto. Las cancelaciones publicadas se excluyen y las paradas saltadas se indican en el recorrido.
 - Home Assistant consulta Moveuskadi para cargar los horarios, las estaciones, la geometría y las previsiones. El navegador solicita el fondo del mapa a OpenStreetMap. El trazado y las paradas se pueden consultar si el fondo del mapa no carga.
 
